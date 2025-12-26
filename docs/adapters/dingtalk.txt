@@ -1,0 +1,124 @@
+企业内部机器人实现群聊发送Markdown消息
+
+本示例介绍了企业内部机器人使用Webhook方式，实现发送Markdown消息。Markdown语法支持的类型有标题、引用、文字效果、链接、图片、无序列表和有序列表。
+
+本文适用对象
+新手开发者，希望了解钉钉企业内部机器人群聊发送Markdown消息的语法。
+
+正在开发应用的开发者，希望了解钉钉企业内部机器人群聊发送Markdown消息的语法及发送消息的流程。
+
+适用场景
+使用机器人的Webhook方式发送机器人消息。
+
+注意事项
+机器人使用Markdown语法@人员，不支持高亮显示。
+
+说明
+例如下图所示，使用Markdown语法发送的@小齐未高亮。
+
+支持的Markdown语法
+
+标题
+# 一级标题
+## 二级标题
+### 三级标题
+#### 四级标题
+##### 五级标题
+###### 六级标题
+ 
+引用
+> A man who stands for nothing will fall for anything.
+ 
+文字加粗、斜体
+**bold**
+*italic*
+ 
+链接
+[this is a link](https://www.dingtalk.com/)
+ 
+图片
+![](http://name.com/pic.jpg)
+ 
+无序列表
+- item1
+- item2
+ 
+有序列表
+1. item1
+2. item2
+
+换行(建议\n前后各添加两个空格)
+  \n  
+
+
+
+接口格式
+
+{
+     "msgtype": "markdown",
+     "markdown": {
+         "title":"杭州天气",
+         "text": "#### 杭州天气 @150XXXXXXXX \n> 9度，西北风1级，空气良89，相对温度73%\n> ![screenshot](https://img.alicdn.com/tfs/TB1NwmBEL9TBuNjy1zbXXXpepXa-2400-1218.png)\n> ###### 10点20分发布 [天气](https://www.dingalk.com) \n"
+     },
+      "at": {
+          "atMobiles": [
+              "150XXXXXXXX"
+          ],
+          "atUserIds": [
+              "user123"
+          ],
+          "isAtAll": false
+      }
+ }
+
+ msgtype
+
+是
+
+String
+
+markdown。
+
+title
+
+是
+
+String
+
+首屏会话透出的展示内容。
+
+text
+
+是
+
+String
+
+markdown格式的消息内容。
+
+atMobiles
+
+否
+
+Array
+
+被@人的手机号。
+
+说明
+消息内容text内要带上"@手机号"，跟atMobiles参数结合使用，才有@效果，如上示例。
+atUserIds
+
+否
+
+Array
+
+被@人的用户userid。
+
+说明
+消息内容content中要带上"@userId"，跟atUserIds参数结合使用，才有@效果。
+isAtAll
+
+否
+
+Boolean
+
+@所有人是true，否则为false。

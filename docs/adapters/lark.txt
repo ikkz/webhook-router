@@ -1,0 +1,99 @@
+支持发送的消息类型说明
+向自定义机器人 webhook 地址发送 POST 请求时，支持推送的消息格式有 文本、富文本、图片消息 以及 群名片 等，本章节介绍各消息类型的请求格式与展示效果。
+
+发送文本消息
+请求消息体示例
+{
+    "msg_type": "text",
+    "content": {
+        "text": "新更新提醒"
+    }
+}
+实现效果
+
+
+参数说明
+参数 msg_type 值为对应消息类型的映射关系，文本消息的 msg_type 对应值为 text。
+
+参数 content 包含消息内容，文本消息的消息内容参数说明如下表所示。
+
+字段	类型	是否必填	示例值	描述
+text	string	是	Test content	文本内容。
+文本消息的 @ 用法
+// @ 单个用户
+<at user_id="ou_xxx">名字</at>
+// @ 所有人
+<at user_id="all">所有人</at>
+@ 单个用户时，user_id字段需填入用户的 Open ID 或 User ID，且必须是有效值（仅支持 @ 自定义机器人所在群的群成员），否则取名字展示，并不产生实际的 @ 效果。
+在外部群聊中，仅支持使用 Open ID @ 单个用户，不支持 User ID。
+
+@ 所有人时，必须满足所在群开启 @ 所有人功能。
+文本消息 @ 用法示例
+{
+    "msg_type": "text",
+    "content": {
+        "text": "<at user_id=\"ou_xxx\">Tom</at> 新更新提醒"
+    }
+}
+发送富文本消息
+富文本消息是指包含文本、超链接、图标等多种文本样式的复合文本信息。
+
+请求消息体示例
+{
+    "msg_type": "post",
+    "content": {
+        "post": {
+            "zh_cn": {
+                "title": "项目更新通知",
+                "content": [
+                    [{
+                        "tag": "text",
+                        "text": "项目有更新: "
+                    }, {
+                        "tag": "a",
+                        "text": "请查看",
+                        "href": "http://www.example.com/"
+                    }, {
+                        "tag": "at",
+                        "user_id": "ou_18eac8********17ad4f02e8bbbb"
+                    }]
+                ]
+            }
+        }
+    }
+}
+实现效果
+
+
+参数说明
+参数 msg_type 值为对应消息类型的映射关系，富文本消息的 msg_type 对应值为 post。
+
+参数 content 包含消息内容，文本消息的消息内容参数说明如下表所示。
+
+字段	类型	是否必填	示例值	描述
+post	object	是	none	富文本消息。
+∟ zh_cn	object	是	none	zh_cn、en_us 分别是富文本的中、英文配置，富文本消息中至少需要包含一种语言的配置。包含的参数说明，参见下文的《zh_cn、en_us 字段说明表》。
+∟ en_us	object	是	none	zh_cn、en_us 分别是富文本的中、英文配置，富文本消息中至少需要包含一种语言的配置。包含的参数说明，参见下文的《zh_cn、en_us 字段说明表》。
+zh_cn、en_us 字段说明表。
+
+字段	类型	是否必填	示例值	描述
+title	string	否	Test title	富文本消息的标题。
+content	[]paragraph	是	[[{"tag": "text","text": "text content"}]]	富文本消息内容。由多个段落组成，每个段落为一个[]节点，其中包含若干个节点。
+富文本支持的标签和参数说明
+文本标签：text
+
+字段	类型	是否必填	示例值	描述
+text	string	是	Text content	文本内容。
+un_escape	boolean	否	false	表示是否 unescape 解码。默认值为 false，未用到 unescape 时可以不填。
+超链接标签：a
+
+字段	类型	是否必填	示例值	描述
+text	string	是	测试地址	超链接的文本内容。
+href	string	是	https://open.feishu.cn	默认的链接地址，你需要确保链接地址的合法性，否则消息会发送失败。
+@ 标签：at
+
+字段	类型	是否必填	示例值	描述
+user_id	string	是	ou_18eac85d35a26****02e8bbbb	用户的 Open ID 或 User ID。
+- @ 单个用户时，user_id字段必须是有效值（仅支持 @ 自定义机器人所在群的群成员）。
+- @ 所有人时，填 all。
+user_name	string	否	Jian Li	用户名称。

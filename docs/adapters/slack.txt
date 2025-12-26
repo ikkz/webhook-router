@@ -1,0 +1,118 @@
+Message payloads
+All of the Slack APIs that publish messages use a common base structure, called a message payload. This is a JSON object that is used to define metadata about the message, such as where it should be published, as well as its visual composition.
+
+This is a list of the fields available in that common structure, but you should also consult the reference docs for any messaging APIs you are using to see if there are any additional fields required by those methods. For example, if you're using the Web API to send messages, you'll also need to specify the channel where the message should be published.
+
+Field	Type	Required?	Description
+text	String	Yes	The usage of this field changes depending on whether you're using blocks or not. If you are, this is used as a fallback string to display in notifications. If you aren't, this is the main body text of the message. It can be formatted as plain text, or with mrkdwn. This field is not enforced as required when using blocks, however it is highly recommended that you include it as the aforementioned fallback.
+blocks	Array	No	An array of layout blocks in the same format as described in the building blocks guide.
+attachments	Array	No	An array of legacy secondary attachments. We recommend you use blocks instead.
+thread_ts	String	No	The ID of another un-threaded message to reply to.
+mrkdwn	Boolean	No	Determines whether the text field is rendered according to mrkdwn formatting or not. Defaults to true.
+
+
+
+
+Basic formatting with mrkdwn
+Text objects contain a text field that can be formatted using a markup language called mrkdwn.
+
+Use it in most Block Kit text objects by specifying a type of mrkdwn. There are, however, a few Block Kit blocks and elements that only allow plain_text with no formatting — these are called out in the Block Kit reference guides.
+
+mrkdwn is also the default formatting method for the top-level text field in a message object when using the Web API to publish a message.
+
+mrkdwn can be used within secondary message attachments by using the mrkdwn_in field as shown in the relevant reference guide. This formatting is similar to Markdown markup but with its own syntax, as shown below.
+
+Visual basics
+Apply visual styles like so:
+
+_italic_ will produce italicized text
+*bold* will produce bold text
+~strike~ will produce strikethrough text
+Line breaks
+You can use multi-line text in app-generated text. Insert a newline by including the string \n in your text. For example:
+
+This is a line of text.\nAnd this is another one.
+
+Will produce the following formatting:
+
+This is a line of text.
+And this is another one.
+
+Block quotes
+You can highlight text as a block quote by using the > character at the beginning of one or more lines:
+
+This is unquoted text\n>This is quoted text\n>This is still quoted text\nThis is unquoted text again
+
+
+Code blocks
+If you have text that you want to be highlighted like code (like this), surround it with back-tick (`) characters:
+
+This is a sentence with some `inline *code*` in it.
+
+
+Text within inline code blocks will not use any other formatting, so it can be useful even if you're not displaying actual code.
+
+You can also highlight larger, multi-line code blocks by placing 3 back-ticks before and after the block:
+
+```This is a code block\nAnd it's multi-line```
+
+
+Lists
+There's no specific list syntax in app-published text, but you can mimic list formatting with regular text and line breaks:
+
+- Detective Chimp\n- Bouncing Boy\n- Aqualad
+
+
+Links
+To link to URLs in conversation, include the URL directly in mrkdwn text and it will be auto-transformed by the server into a link.
+
+URLs with spaces will break, so we recommend that you remove any spaces from your URL links.
+This message contains a URL http://example.com/
+
+So does this one: www.example.com
+
+You can also use mrkdwn to manually add links:
+
+This message contains a URL <http://example.com/>
+
+Adjust the text that appears as the link from the URL to something else:
+
+<http://www.example.com|This message *is* a link>
+
+And create email links:
+
+<mailto:bob@example.com|Email Bob Roberts>
+
+
+You can also use Block Kit buttons as links by using the url parameter in button elements.
+Links in retrieved messages
+When you use any of the messaging APIs to retrieve a message, you'll see that auto-transformed URLs are shown in the mrkdwn format. So this:
+
+This message contains a URL http://example.com/
+
+Will be represented in the API as:
+
+This message contains a URL <http://example.com/>
+
+While this message:
+
+So does this one: www.example.com
+
+Will be retrieved in this form:
+
+So does this one: <http://example.com|www.example.com>
+
+Emoji
+Emoji can be included in their full-color, fully-illustrated form directly in text. Once published, Slack will then convert the emoji into their common 'colon' format. For example, a message published like this:
+
+It's Friday 😄
+
+will be converted into colon format:
+
+It's Friday :smile:
+
+If you're publishing text with emoji, you don't need to worry about converting them, just include them as-is.
+
+If you're retrieving messages, you'll receive the emojis in colon format, so you might want to convert them back to their unicode emoji form. The compatible emoji formats are the Unicode Unified format (used by OSX 10.7+ and iOS 6+), the Softbank format (used by iOS 5) and the Google format (used by some Android devices). These will be converted into their colon-format equivalents.
+
+The list of supported emoji are taken from https://github.com/iamcal/emoji-data.
