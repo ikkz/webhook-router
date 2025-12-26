@@ -1,0 +1,9 @@
+
+[workspace]
+resolver = '2'
+members = [
+	'apps/webhook_router',
+]
+
+[profile.release]
+lto = true
