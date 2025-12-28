@@ -18,6 +18,8 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 uuid = { version = "1", features = ["v4", "serde"] }
 markdown = "1.0.0"
+utoipa = { version = "5", features = ["axum_extras"] }
+utoipa-swagger-ui = { version = "8", features = ["axum"] }
 
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

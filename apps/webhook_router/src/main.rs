@@ -3,13 +3,15 @@ use axum::routing::{get, post};
 use axum::Router;
 use clap::Parser;
 use tracing_subscriber::EnvFilter;
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 
 mod adapters;
 mod db;
 mod handlers;
 mod models;
 
-use handlers::{api_router, basic_auth, healthz, ingress, AppState};
+use handlers::{api_router, basic_auth, healthz, ingress, AppState, ApiDoc};
 use models::BasicAuth;
 
 #[derive(Debug, Parser)]
@@ -48,6 +50,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let app = Router::<AppState>::new()
         .route("/healthz", get(healthz))
         .route("/ingress/:endpoint_id/:platform", post(ingress))
+        .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
         .nest("/api", api)
         .with_state(state);
 

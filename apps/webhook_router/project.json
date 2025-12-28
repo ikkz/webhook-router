@@ -7,7 +7,9 @@
     "build": {
       "cache": true,
       "executor": "@monodon/rust:build",
-      "outputs": ["{options.target-dir}"],
+      "outputs": [
+        "{options.target-dir}"
+      ],
       "options": {
         "target-dir": "dist/target/webhook_router"
       },
@@ -20,7 +22,9 @@
     "test": {
       "cache": true,
       "executor": "@monodon/rust:test",
-      "outputs": ["{options.target-dir}"],
+      "outputs": [
+        "{options.target-dir}"
+      ],
       "options": {
         "target-dir": "dist/target/webhook_router"
       },
@@ -33,16 +37,25 @@
     "lint": {
       "cache": true,
       "executor": "@monodon/rust:lint",
-      "outputs": ["{options.target-dir}"],
+      "outputs": [
+        "{options.target-dir}"
+      ],
       "options": {
         "target-dir": "dist/target/webhook_router"
       }
     },
     "run": {
       "executor": "@monodon/rust:run",
-      "outputs": ["{options.target-dir}"],
+      "outputs": [
+        "{options.target-dir}"
+      ],
       "options": {
-        "target-dir": "dist/target/webhook_router"
+        "target-dir": "dist/target/webhook_router",
+        "args": [
+          "--username=test",
+          "--password=test",
+          "--db-path=:memory:"
+        ]
       },
       "configurations": {
         "production": {

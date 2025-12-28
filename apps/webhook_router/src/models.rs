@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use utoipa::ToSchema;
 
 #[derive(Debug, Clone)]
 pub struct BasicAuth {
@@ -7,7 +8,7 @@ pub struct BasicAuth {
     pub password: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, ToSchema)]
 pub struct UemEvent {
     pub id: String,
     pub source: String,
@@ -24,7 +25,7 @@ pub struct OutgoingPayload {
     pub content_type: &'static str,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateTargetRequest {
     pub name: String,
     pub kind: String,
@@ -32,7 +33,7 @@ pub struct CreateTargetRequest {
     pub headers: Option<Value>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct Target {
     pub id: String,
     pub name: String,
@@ -42,19 +43,19 @@ pub struct Target {
     pub created_at: i64,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateEndpointRequest {
     pub name: String,
     pub target_ids: Vec<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateEndpointRequest {
     pub name: Option<String>,
     pub target_ids: Option<Vec<String>>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct Endpoint {
     pub id: String,
     pub name: String,
@@ -62,7 +63,7 @@ pub struct Endpoint {
     pub created_at: i64,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct EventRecord {
     pub id: String,
     pub endpoint_id: String,
@@ -73,7 +74,7 @@ pub struct EventRecord {
     pub created_at: i64,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct DeliveryOutcome {
     pub target_id: String,
     pub status: String,

@@ -3,6 +3,7 @@ use axum::http::{HeaderMap, HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{delete, get, post, put};
 use axum::{Json, Router};
+use utoipa::OpenApi;
 use base64::Engine;
 use serde_json::{json, Value};
 use uuid::Uuid;
@@ -30,10 +31,68 @@ pub fn api_router() -> Router<AppState> {
         .route("/events", get(list_events))
 }
 
+#[derive(OpenApi)]
+#[openapi(
+    paths(
+        healthz,
+        ingress,
+        create_target,
+        list_targets,
+        delete_target,
+        create_endpoint,
+        list_endpoints,
+        update_endpoint,
+        list_events,
+    ),
+    components(
+        schemas(
+            UemEvent,
+            CreateTargetRequest,
+            Target,
+            CreateEndpointRequest,
+            UpdateEndpointRequest,
+            Endpoint,
+            EventRecord,
+            DeliveryOutcome,
+            AppErrorResponse,
+        )
+    ),
+    tags(
+        (name = "webhook-router", description = "Webhook Router API")
+    )
+)]
+pub struct ApiDoc;
+
+#[derive(utoipa::ToSchema)]
+pub struct AppErrorResponse {
+    pub error: String,
+}
+
+#[utoipa::path(
+    get,
+    path = "/healthz",
+    responses(
+        (status = 200, description = "Health check", body = String)
+    )
+)]
 pub async fn healthz() -> &'static str {
     "ok"
 }
 
+#[utoipa::path(
+    post,
+    path = "/ingress/{endpoint_id}/{platform}",
+    params(
+        ("endpoint_id" = String, Path, description = "Endpoint ID"),
+        ("platform" = String, Path, description = "Platform name")
+    ),
+    request_body = Value,
+    responses(
+        (status = 200, description = "Event processed successfully", body = Value),
+        (status = 400, description = "Bad request", body = AppErrorResponse),
+        (status = 404, description = "Endpoint not found", body = AppErrorResponse)
+    )
+)]
 pub async fn ingress(
     Path((endpoint_id, platform)): Path<(String, String)>,
     State(state): State<AppState>,
@@ -202,6 +261,18 @@ async fn dispatch_to_target(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/targets",
+    request_body = CreateTargetRequest,
+    responses(
+        (status = 200, description = "Target created successfully", body = Target),
+        (status = 400, description = "Bad request", body = AppErrorResponse)
+    ),
+    security(
+        ("basic_auth" = [])
+    )
+)]
 async fn create_target(
     State(state): State<AppState>,
     Json(req): Json<CreateTargetRequest>,
@@ -210,11 +281,35 @@ async fn create_target(
     Ok(Json(target))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/targets",
+    responses(
+        (status = 200, description = "List of targets", body = [Target])
+    ),
+    security(
+        ("basic_auth" = [])
+    )
+)]
 async fn list_targets(State(state): State<AppState>) -> Result<Json<Vec<Target>>, AppError> {
     let targets = state.db.list_targets().await.map_err(AppError::from)?;
     Ok(Json(targets))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/targets/{id}",
+    params(
+        ("id" = String, Path, description = "Target ID")
+    ),
+    responses(
+        (status = 204, description = "Target deleted successfully"),
+        (status = 404, description = "Target not found", body = AppErrorResponse)
+    ),
+    security(
+        ("basic_auth" = [])
+    )
+)]
 async fn delete_target(
     Path(id): Path<String>,
     State(state): State<AppState>,
@@ -226,6 +321,18 @@ async fn delete_target(
     Ok(StatusCode::NO_CONTENT)
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/endpoints",
+    request_body = CreateEndpointRequest,
+    responses(
+        (status = 200, description = "Endpoint created successfully", body = Endpoint),
+        (status = 400, description = "Bad request", body = AppErrorResponse)
+    ),
+    security(
+        ("basic_auth" = [])
+    )
+)]
 async fn create_endpoint(
     State(state): State<AppState>,
     Json(req): Json<CreateEndpointRequest>,
@@ -238,11 +345,37 @@ async fn create_endpoint(
     Ok(Json(endpoint))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/endpoints",
+    responses(
+        (status = 200, description = "List of endpoints", body = [Endpoint])
+    ),
+    security(
+        ("basic_auth" = [])
+    )
+)]
 async fn list_endpoints(State(state): State<AppState>) -> Result<Json<Vec<Endpoint>>, AppError> {
     let endpoints = state.db.list_endpoints().await.map_err(AppError::from)?;
     Ok(Json(endpoints))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/endpoints/{id}",
+    params(
+        ("id" = String, Path, description = "Endpoint ID")
+    ),
+    request_body = UpdateEndpointRequest,
+    responses(
+        (status = 200, description = "Endpoint updated successfully", body = Endpoint),
+        (status = 400, description = "Bad request", body = AppErrorResponse),
+        (status = 404, description = "Endpoint not found", body = AppErrorResponse)
+    ),
+    security(
+        ("basic_auth" = [])
+    )
+)]
 async fn update_endpoint(
     Path(id): Path<String>,
     State(state): State<AppState>,
@@ -260,6 +393,16 @@ async fn update_endpoint(
     Ok(Json(endpoint))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/events",
+    responses(
+        (status = 200, description = "List of events", body = [EventRecord])
+    ),
+    security(
+        ("basic_auth" = [])
+    )
+)]
 async fn list_events(State(state): State<AppState>) -> Result<Json<Vec<EventRecord>>, AppError> {
     let events = state.db.list_events().await.map_err(AppError::from)?;
     Ok(Json(events))
