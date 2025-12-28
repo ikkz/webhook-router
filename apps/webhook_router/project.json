@@ -52,6 +52,34 @@
         "target-dir": "dist/target/webhook_router"
       }
     },
+    "e2e-run": {
+      "executor": "@monodon/rust:run",
+      "continuous": true,
+      "dependsOn": [
+        {
+          "projects": [
+            "console"
+          ],
+          "target": "build"
+        }
+      ],
+      "outputs": [
+        "{options.target-dir}"
+      ],
+      "options": {
+        "target-dir": "dist/target/webhook_router",
+        "args": [
+          "--username=test",
+          "--password=test",
+          "--db-path=:memory:"
+        ]
+      },
+      "configurations": {
+        "production": {
+          "release": true
+        }
+      }
+    },
     "run": {
       "executor": "@monodon/rust:run",
       "continuous": true,

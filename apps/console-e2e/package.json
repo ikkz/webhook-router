@@ -3,8 +3,17 @@
   "version": "0.0.1",
   "private": true,
   "nx": {
-    "implicitDependencies": [
-      "@webhook-router/console"
-    ]
+    "targets": {
+      "e2e": {
+        "dependsOn": [
+          {
+            "projects": [
+              "webhook_router"
+            ],
+            "target": "e2e-run"
+          }
+        ]
+      }
+    }
   }
 }
