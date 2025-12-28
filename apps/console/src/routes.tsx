@@ -23,7 +23,6 @@ const protectedRoute = createRoute({
         const { auth } = context as any;
         if (!auth.isAuthenticated) {
             throw redirect({
-                // @ts-expect-error Types not yet generated for /login
                 to: '/login',
             });
         }

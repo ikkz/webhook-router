@@ -106,7 +106,7 @@ export function EndpointDetailsPage() {
                                         variant="ghost"
                                         size="icon-sm"
                                         onClick={() => {
-                                            if (confirm('Are you sure you want to delete this target?')) {
+                                            if (window.confirm('Are you sure you want to delete this target?')) {
                                                 deleteMutation.mutate(target.id);
                                             }
                                         }}
