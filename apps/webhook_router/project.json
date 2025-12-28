@@ -62,7 +62,8 @@
             "console"
           ],
           "target": "build"
-        }
+        },
+        "build"
       ],
       "outputs": [
         "{options.target-dir}"
