@@ -40,6 +40,11 @@ export function LoginPage() {
             }
 
             await login(basicAuth);
+
+            // Wait for the auth state to propagate to the router context
+            // This ensures the beforeLoad check in protected routes sees the updated auth state
+            await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
             // Use replace to avoid adding login page to history
             navigate({ to: '/', replace: true });
         } catch (err) {

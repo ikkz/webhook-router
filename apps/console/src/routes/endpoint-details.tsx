@@ -3,7 +3,7 @@ import { useParams } from '@tanstack/react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { listTargets, createTarget, deleteTarget, getEndpoint, CreateTargetRequest } from '@webhook-router/api-client';
 import { useState } from 'react';
-import { Plus, Loader2, Trash2, Globe, MessageSquare, ArrowLeft } from 'lucide-react';
+import { Plus, Loader2, Trash2, Globe, MessageSquare, ArrowLeft, Copy, Check } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -77,6 +77,8 @@ export function EndpointDetailsPage() {
             </div>
 
             <div className="border-t pt-6">
+                <WebhookUrls endpointId={endpoint.id} />
+
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-xl font-semibold tracking-tight">Targets</h3>
                     <Button onClick={() => setIsCreating(true)}>
@@ -206,3 +208,71 @@ function CreateTargetForm({ onSubmit, onCancel, isLoading }: { onSubmit: (data: 
         </Card>
     )
 }
+
+function WebhookUrls({ endpointId }: { endpointId: string }) {
+    const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
+
+    // Get the base URL from the current window location
+    const baseUrl = window.location.origin;
+
+    const platforms = [
+        { name: 'Slack', value: 'slack' },
+        { name: 'Lark/Feishu', value: 'lark' },
+        { name: 'DingTalk', value: 'dingtalk' },
+        { name: 'WeCom', value: 'wecom' },
+        { name: 'HTTP/Custom', value: 'http' },
+    ];
+
+    const copyToClipboard = async (platform: string) => {
+        const url = `${baseUrl}/ingress/${endpointId}/${platform}`;
+        try {
+            await navigator.clipboard.writeText(url);
+            setCopiedUrl(url);
+            setTimeout(() => setCopiedUrl(null), 2000);
+        } catch (err) {
+            console.error('Failed to copy:', err);
+        }
+    };
+
+    return (
+        <Card className="mb-6">
+            <CardHeader>
+                <CardTitle className="text-lg">Webhook Ingress URLs</CardTitle>
+                <CardDescription>Copy these URLs to configure webhooks on different platforms</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="space-y-3">
+                    {platforms.map(({ name, value }) => {
+                        const url = `${baseUrl}/ingress/${endpointId}/${value}`;
+                        const isCopied = copiedUrl === url;
+
+                        return (
+                            <div key={value} className="flex items-end gap-2 group">
+                                <div className="flex-1 min-w-0">
+                                    <div className="text-xs font-medium text-muted-foreground mb-1">{name}</div>
+                                    <code className="text-xs bg-muted px-3 py-2 rounded block truncate">
+                                        {url}
+                                    </code>
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    size="icon-sm"
+                                    onClick={() => copyToClipboard(value)}
+                                    className="flex-shrink-0"
+                                    title={`Copy ${name} URL`}
+                                >
+                                    {isCopied ? (
+                                        <Check className="w-4 h-4 text-green-500" />
+                                    ) : (
+                                        <Copy className="w-4 h-4" />
+                                    )}
+                                </Button>
+                            </div>
+                        );
+                    })}
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+

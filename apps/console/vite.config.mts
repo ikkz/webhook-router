@@ -15,8 +15,8 @@ export default defineConfig(() => ({
     port: 4200,
     host: 'localhost',
     proxy: {
-      '/console/api': {
-        target: 'http://localhost:3000',
+      '/api': {
+        target: 'http://localhost:3000/console/',
         changeOrigin: true,
       },
       '/healthz': {
