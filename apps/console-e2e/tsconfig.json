@@ -16,8 +16,10 @@
     "src/**/*.d.ts"
   ],
   "exclude": [
+    "dist",
     "out-tsc",
     "test-output",
+    "../../dist",
     "eslint.config.js",
     "eslint.config.mjs",
     "eslint.config.cjs"

@@ -173,6 +173,7 @@ function CreateTargetForm({ onSubmit, onCancel, isLoading }: { onSubmit: (data: 
                                     <SelectItem value="slack">Slack</SelectItem>
                                     <SelectItem value="dingtalk">DingTalk</SelectItem>
                                     <SelectItem value="lark">Lark</SelectItem>
+                                    <SelectItem value="wecom">WeCom</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -275,4 +276,3 @@ function WebhookUrls({ endpointId }: { endpointId: string }) {
         </Card>
     );
 }
-

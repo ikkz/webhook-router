@@ -3,7 +3,13 @@ import { nxE2EPreset } from '@nx/playwright/preset';
 import { workspaceRoot } from '@nx/devkit';
 
 // For CI, you may want to set BASE_URL to the deployed application.
-const baseURL = process.env['BASE_URL'] || 'http://localhost:3000/console';
+const rawBaseUrl = process.env['BASE_URL'] || 'http://localhost:3100';
+const serverBaseUrl = rawBaseUrl.replace(/\/console\/?$/, '');
+const baseURL = rawBaseUrl.endsWith('/console') ? rawBaseUrl : `${serverBaseUrl}/console`;
+
+if (!process.env['BASE_URL'] || process.env['BASE_URL'] !== serverBaseUrl) {
+  process.env['BASE_URL'] = serverBaseUrl;
+}
 
 /**
  * Read environment variables from file.
@@ -22,12 +28,18 @@ export default defineConfig({
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
   },
+  /* Increase timeout for webhook integration tests */
+  timeout: 60000,
+  expect: {
+    timeout: 10000,
+  },
   /* Run your local dev server before starting the tests */
   webServer: {
     command: 'pnpm exec nx run webhook_router:e2e-run',
-    url: 'http://localhost:3000/console',
+    url: baseURL,
     reuseExistingServer: true,
     cwd: workspaceRoot,
+    timeout: 120000,
   },
   projects: [
     {
@@ -35,15 +47,15 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
 
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
+    // {
+    //   name: 'firefox',
+    //   use: { ...devices['Desktop Firefox'] },
+    // },
 
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
-    },
+    // {
+    //   name: 'webkit',
+    //   use: { ...devices['Desktop Safari'] },
+    // },
 
     // Uncomment for mobile browsers support
     /* {

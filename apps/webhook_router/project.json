@@ -62,8 +62,7 @@
             "console"
           ],
           "target": "build"
-        },
-        "build"
+        }
       ],
       "outputs": [
         "{options.target-dir}"
@@ -71,8 +70,9 @@
       "options": {
         "target-dir": "dist/target/webhook_router",
         "args": [
-          "--username=test",
-          "--password=test",
+          "--bind=127.0.0.1:3100",
+          "--username=admin",
+          "--password=admin",
           "--db-path=:memory:"
         ],
         "release": true
@@ -87,8 +87,8 @@
       "options": {
         "target-dir": "dist/target/webhook_router",
         "args": [
-          "--username=test",
-          "--password=test",
+          "--username=admin",
+          "--password=admin",
           "--db-path=:memory:"
         ]
       },
@@ -102,7 +102,7 @@
       "executor": "nx:run-commands",
       "options": {
         "cwd": "apps/webhook_router",
-        "command": "cargo run -- --username=placeholder --password=placeholder --generate-openapi > ../../packages/api-client/openapi.json"
+        "command": "cargo run -- --username=admin --password=admin --generate-openapi > ../../packages/api-client/openapi.json"
       }
     }
   },
