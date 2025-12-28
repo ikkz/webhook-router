@@ -5,6 +5,11 @@ import { listTargets, createTarget, deleteTarget, getEndpoint, CreateTargetReque
 import { useState } from 'react';
 import { Plus, Loader2, Trash2, Globe, MessageSquare, ArrowLeft } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export function EndpointDetailsPage() {
     const { endpointId } = useParams({ strict: false });
@@ -74,13 +79,10 @@ export function EndpointDetailsPage() {
             <div className="border-t pt-6">
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-xl font-semibold tracking-tight">Targets</h3>
-                    <button
-                        onClick={() => setIsCreating(true)}
-                        className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
-                    >
+                    <Button onClick={() => setIsCreating(true)}>
                         <Plus className="w-4 h-4" />
                         Add Target
-                    </button>
+                    </Button>
                 </div>
 
                 {isCreating && (
@@ -93,31 +95,33 @@ export function EndpointDetailsPage() {
 
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {targets?.map((target) => (
-                        <div key={target.id} className="rounded-lg border bg-card text-card-foreground shadow-sm">
-                            <div className="flex flex-col space-y-1.5 p-6">
+                        <Card key={target.id}>
+                            <CardHeader>
                                 <div className="flex justify-between items-start">
-                                    <h3 className="text-xl font-semibold leading-none tracking-tight flex items-center gap-2">
+                                    <CardTitle className="flex items-center gap-2">
                                         {target.kind === 'slack' ? <MessageSquare className="w-4 h-4" /> : <Globe className="w-4 h-4" />}
                                         {target.name}
-                                    </h3>
-                                    <button
+                                    </CardTitle>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon-sm"
                                         onClick={() => {
                                             if (confirm('Are you sure you want to delete this target?')) {
                                                 deleteMutation.mutate(target.id);
                                             }
                                         }}
-                                        className="text-destructive hover:bg-destructive/10 p-1 rounded"
+                                        className="text-destructive hover:bg-destructive/10"
                                     >
                                         <Trash2 className="w-4 h-4" />
-                                    </button>
+                                    </Button>
                                 </div>
-                                <p className="text-sm text-muted-foreground truncate" title={target.url}>{target.url}</p>
-                            </div>
-                            <div className="p-6 pt-0">
+                                <CardDescription className="truncate" title={target.url}>{target.url}</CardDescription>
+                            </CardHeader>
+                            <CardContent>
                                 <div className="text-xs text-muted-foreground">Kind: {target.kind}</div>
                                 <div className="text-xs text-muted-foreground mt-1">Created: {new Date(target.created_at * 1000).toLocaleString()}</div>
-                            </div>
-                        </div>
+                            </CardContent>
+                        </Card>
                     ))}
                     {targets?.length === 0 && (
                         <p className="col-span-full text-center text-muted-foreground py-10 border rounded-lg border-dashed">No targets configured for this endpoint.</p>
@@ -139,62 +143,66 @@ function CreateTargetForm({ onSubmit, onCancel, isLoading }: { onSubmit: (data: 
     };
 
     return (
-        <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6 mb-6">
-            <h3 className="font-semibold mb-4">Add Target to Endpoint</h3>
-            <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+        <Card className="mb-6">
+            <CardHeader>
+                <CardTitle>Add Target to Endpoint</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="target-name">Name</Label>
+                            <Input
+                                id="target-name"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                placeholder="My Webhook"
+                                required
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="target-kind">Kind</Label>
+                            <Select value={kind} onValueChange={setKind}>
+                                <SelectTrigger id="target-kind">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="http">HTTP</SelectItem>
+                                    <SelectItem value="slack">Slack</SelectItem>
+                                    <SelectItem value="dingtalk">DingTalk</SelectItem>
+                                    <SelectItem value="lark">Lark</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
                     <div className="space-y-2">
-                        <label className="text-sm font-medium">Name</label>
-                        <input
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            placeholder="My Webhook"
+                        <Label htmlFor="target-url">URL</Label>
+                        <Input
+                            id="target-url"
+                            value={url}
+                            onChange={(e) => setUrl(e.target.value)}
+                            placeholder="https://..."
                             required
                         />
                     </div>
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium">Kind</label>
-                        <select
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                            value={kind}
-                            onChange={(e) => setKind(e.target.value)}
+                    <div className="flex justify-end gap-2">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={onCancel}
                         >
-                            <option value="http">HTTP</option>
-                            <option value="slack">Slack</option>
-                            <option value="dingtalk">DingTalk</option>
-                            <option value="lark">Lark</option>
-                        </select>
+                            Cancel
+                        </Button>
+                        <Button
+                            type="submit"
+                            disabled={isLoading}
+                        >
+                            {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                            Create
+                        </Button>
                     </div>
-                </div>
-                <div className="space-y-2">
-                    <label className="text-sm font-medium">URL</label>
-                    <input
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                        value={url}
-                        onChange={(e) => setUrl(e.target.value)}
-                        placeholder="https://..."
-                        required
-                    />
-                </div>
-                <div className="flex justify-end gap-2">
-                    <button
-                        type="button"
-                        onClick={onCancel}
-                        className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        type="submit"
-                        disabled={isLoading}
-                        className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
-                    >
-                        {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                        Create
-                    </button>
-                </div>
-            </form>
-        </div>
+                </form>
+            </CardContent>
+        </Card>
     )
 }

@@ -12,9 +12,19 @@ client.interceptors.request.use((request) => {
     return request;
 });
 
+// Handle 403 Forbidden responses by clearing auth
+client.interceptors.response.use((response) => {
+    if (response.status === 403) {
+        localStorage.removeItem(STORAGE_KEY);
+        // Trigger a custom event to notify the app to logout
+        window.dispatchEvent(new CustomEvent('auth:forbidden'));
+    }
+    return response;
+});
+
 interface AuthContextType {
     isAuthenticated: boolean;
-    login: (token: string) => void;
+    login: (token: string) => Promise<void>;
     logout: () => void;
 }
 
@@ -25,9 +35,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return !!localStorage.getItem(STORAGE_KEY);
     });
 
-    const login = (token: string) => {
+    const login = async (token: string) => {
         localStorage.setItem(STORAGE_KEY, token);
         setIsAuthenticated(true);
+        // Wait for state update to complete
+        await new Promise(resolve => setTimeout(resolve, 0));
     };
 
     const logout = () => {
@@ -45,6 +57,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }).catch(() => {
             // Ignore network errors for optimistic auth
         });
+    }, []);
+
+    useEffect(() => {
+        const handleForbidden = () => {
+            logout();
+        };
+
+        window.addEventListener('auth:forbidden', handleForbidden);
+        return () => window.removeEventListener('auth:forbidden', handleForbidden);
     }, []);
 
     return (

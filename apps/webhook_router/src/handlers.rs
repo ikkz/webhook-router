@@ -1,5 +1,5 @@
 use axum::extract::{Path, State};
-use axum::http::{HeaderMap, HeaderValue, StatusCode};
+use axum::http::{HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{delete, get, post, put};
 use axum::{Json, Router};
@@ -27,7 +27,7 @@ pub struct AppState {
     path = "/api/auth/check",
     responses(
         (status = 200, description = "Auth check", body = Value),
-        (status = 401, description = "Unauthorized")
+        (status = 403, description = "Forbidden")
     ),
     security(
         ("basic_auth" = [])
@@ -456,12 +456,9 @@ pub async fn basic_auth(
         return Ok(next.run(request).await);
     }
 
-    let mut response = StatusCode::UNAUTHORIZED.into_response();
-    response.headers_mut().insert(
-        axum::http::header::WWW_AUTHENTICATE,
-        HeaderValue::from_static("Basic realm=\"webhook-router\""),
-    );
-    Ok(response)
+    // Return 403 Forbidden without WWW-Authenticate header to prevent browser's native auth dialog
+    // Frontend will handle redirecting to login page
+    Ok(StatusCode::FORBIDDEN.into_response())
 }
 
 fn is_authorized(auth: &BasicAuth, headers: &HeaderMap) -> bool {
