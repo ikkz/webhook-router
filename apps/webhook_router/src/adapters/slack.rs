@@ -3,6 +3,7 @@ use uuid::Uuid;
 
 use crate::adapters::{AdapterError, WebhookAdapter};
 use crate::models::{OutgoingPayload, UemEvent};
+use crate::utils::markdown::SlackConverter;
 
 #[derive(Debug)]
 pub struct SlackAdapter;
@@ -48,8 +49,9 @@ impl WebhookAdapter for SlackAdapter {
     }
 
     fn uem_to_egress(&self, event: &UemEvent) -> Result<OutgoingPayload, AdapterError> {
+        let mrkdwn = SlackConverter::convert(&event.markdown);
         Ok(OutgoingPayload {
-            body: json!({ "text": event.markdown }),
+            body: json!({ "text": mrkdwn }),
             content_type: "application/json",
         })
     }
@@ -95,11 +97,11 @@ mod tests {
             source: "slack".to_string(),
             timestamp: 1,
             title: None,
-            markdown: "hello".to_string(),
+            markdown: "**bold**".to_string(),
             raw: json!({}),
             meta: json!({}),
         };
         let payload = adapter.uem_to_egress(&event).expect("payload");
-        assert_eq!(payload.body["text"], "hello");
+        assert_eq!(payload.body["text"], "*bold*");
     }
 }

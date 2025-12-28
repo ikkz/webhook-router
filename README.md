@@ -9,6 +9,12 @@ This project is currently **work in progress**. Core routing is being built; the
 - Normalizes content to Markdown with minimal metadata.
 - Forwards to one or more downstream webhook targets.
 
+## Markdown Compatibility
+The system ensures your messages look great on any platform by automatically converting standard Markdown:
+- **Slack**: Converts standard Markdown (e.g., `**bold**`, `[link](url)`) to Slack's native `mrkdwn` syntax.
+- **Lark / Feishu**: Transforms Markdown into Lark's JSON "Post" (Rich Text) format to support native styling.
+- **WeCom / DingTalk**: Optimizes formatting for their respective Markdown subsets.
+
 ## Status
 - Backend routing: in active development.
 - Console UI: in progress.

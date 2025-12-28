@@ -3,6 +3,7 @@ use uuid::Uuid;
 
 use crate::adapters::{AdapterError, WebhookAdapter};
 use crate::models::{OutgoingPayload, UemEvent};
+use crate::utils::markdown::LarkConverter;
 
 #[derive(Debug)]
 pub struct LarkAdapter;
@@ -57,10 +58,11 @@ impl WebhookAdapter for LarkAdapter {
     }
 
     fn uem_to_egress(&self, event: &UemEvent) -> Result<OutgoingPayload, AdapterError> {
+        let post_content = LarkConverter::convert(&event.markdown);
         Ok(OutgoingPayload {
             body: json!({
-                "msg_type": "text",
-                "content": { "text": event.markdown }
+                "msg_type": "post",
+                "content": { "post": post_content }
             }),
             content_type: "application/json",
         })
@@ -116,7 +118,10 @@ mod tests {
             meta: json!({}),
         };
         let payload = adapter.uem_to_egress(&event).expect("payload");
-        assert_eq!(payload.body["msg_type"], "text");
-        assert_eq!(payload.body["content"]["text"], "hello");
+        assert_eq!(payload.body["msg_type"], "post");
+        // Verify post content structure exists
+        assert!(payload.body["content"]["post"]["zh_cn"]["content"].is_array());
+        let content_text = &payload.body["content"]["post"]["zh_cn"]["content"][0][0]["text"];
+        assert_eq!(content_text, "hello");
     }
 }
