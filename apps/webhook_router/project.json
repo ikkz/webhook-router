@@ -25,7 +25,8 @@
         "production": {
           "release": true
         }
-      }
+      },
+      "defaultConfiguration": "production"
     },
     "test": {
       "cache": true,
@@ -72,12 +73,8 @@
           "--username=test",
           "--password=test",
           "--db-path=:memory:"
-        ]
-      },
-      "configurations": {
-        "production": {
-          "release": true
-        }
+        ],
+        "release": true
       }
     },
     "run": {
