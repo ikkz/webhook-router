@@ -4,6 +4,7 @@ import path from "path"
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import { viteSingleFile } from "vite-plugin-singlefile"
 import { Plugin } from 'vite';
 
 
@@ -14,7 +15,7 @@ export default defineConfig(() => ({
     port: 4200,
     host: 'localhost',
     proxy: {
-      '/api': {
+      '/console/api': {
         target: 'http://localhost:3000',
         changeOrigin: true,
       },
@@ -28,7 +29,7 @@ export default defineConfig(() => ({
     port: 4200,
     host: 'localhost',
   },
-  plugins: [react(), tailwindcss() as Plugin[]],
+  plugins: [react(), tailwindcss() as Plugin[], viteSingleFile() as Plugin],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

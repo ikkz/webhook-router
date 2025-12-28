@@ -7,11 +7,13 @@ use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
 mod adapters;
+mod console_handlers;
 mod db;
 mod handlers;
 mod models;
 mod utils;
 
+use console_handlers::console_router;
 use handlers::{api_router, basic_auth, healthz, ingress, AppState, ApiDoc};
 use models::BasicAuth;
 
@@ -55,13 +57,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         http: reqwest::Client::new(),
     };
 
-    let api = api_router().layer(middleware::from_fn_with_state(state.clone(), basic_auth));
+    // Protected API routes with authentication
+    let protected_api = api_router()
+        .layer(middleware::from_fn_with_state(state.clone(), basic_auth));
+
+    // Console router: HTML is public, API is protected
+    let console = Router::<AppState>::new()
+        .route("/", get(console_handlers::serve_console))
+        .nest("/api", protected_api);
 
     let app = Router::<AppState>::new()
+        // Public routes (no authentication)
         .route("/healthz", get(healthz))
         .route("/ingress/:endpoint_id/:platform", post(ingress))
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
-        .nest("/api", api)
+        // Console routes (HTML public, API protected)
+        .nest("/console", console)
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind(&args.bind).await?;

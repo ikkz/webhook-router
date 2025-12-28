@@ -6,6 +6,14 @@
   "targets": {
     "build": {
       "cache": true,
+      "dependsOn": [
+        {
+          "projects": [
+            "console"
+          ],
+          "target": "build"
+        }
+      ],
       "executor": "@monodon/rust:build",
       "outputs": [
         "{options.target-dir}"
