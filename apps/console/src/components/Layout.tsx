@@ -1,17 +1,18 @@
-
-import { Link, Outlet } from '@tanstack/react-router';
+import { Outlet } from '@tanstack/react-router';
+import { Sidebar } from './sidebar';
 
 export function Layout() {
     return (
-        <div className="flex flex-col min-h-screen">
-            <header className="p-4 border-b flex gap-4">
-                <Link to="/" className="font-bold">
-                    Console
-                </Link>
-            </header>
-            <main className="flex-1 p-4">
-                <Outlet />
-            </main>
+        <div className="flex min-h-screen bg-background text-foreground">
+            <Sidebar />
+            <div className="flex-1 flex flex-col">
+                <header className="h-14 border-b px-4 flex items-center justify-between">
+                    <h1 className="font-semibold">Console</h1>
+                </header>
+                <main className="flex-1 p-6 overflow-auto">
+                    <Outlet />
+                </main>
+            </div>
         </div>
     );
 }

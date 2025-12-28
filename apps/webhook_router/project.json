@@ -46,6 +46,7 @@
     },
     "run": {
       "executor": "@monodon/rust:run",
+      "continuous": true,
       "outputs": [
         "{options.target-dir}"
       ],

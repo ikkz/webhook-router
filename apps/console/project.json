@@ -1,0 +1,14 @@
+{
+    "targets": {
+        "dev": {
+            "dependsOn": [
+                {
+                    "projects": [
+                        "webhook_router"
+                    ],
+                    "target": "run"
+                }
+            ]
+        }
+    }
+}

@@ -22,12 +22,31 @@ pub struct AppState {
     pub http: reqwest::Client,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/auth/check",
+    responses(
+        (status = 200, description = "Auth check", body = Value),
+        (status = 401, description = "Unauthorized")
+    ),
+    security(
+        ("basic_auth" = [])
+    )
+)]
+pub async fn check_auth(State(state): State<AppState>) -> Json<Value> {
+    Json(json!({
+        "valid": true,
+        "username": state.auth.username
+    }))
+}
+
 pub fn api_router() -> Router<AppState> {
     Router::<AppState>::new()
-        .route("/targets", post(create_target).get(list_targets))
-        .route("/targets/:id", delete(delete_target))
+        .route("/auth/check", get(check_auth))
+        .route("/endpoints/:id/targets", post(create_target).get(list_targets))
+        .route("/endpoints/:id/targets/:target_id", delete(delete_target))
         .route("/endpoints", post(create_endpoint).get(list_endpoints))
-        .route("/endpoints/:id", put(update_endpoint))
+        .route("/endpoints/:id", put(update_endpoint).get(get_endpoint))
         .route("/events", get(list_events))
 }
 
@@ -36,10 +55,12 @@ pub fn api_router() -> Router<AppState> {
     paths(
         healthz,
         ingress,
+        check_auth,
         create_target,
         list_targets,
         delete_target,
         create_endpoint,
+        get_endpoint,
         list_endpoints,
         update_endpoint,
         list_events,
@@ -133,9 +154,12 @@ pub async fn ingress(
         .await
         .map_err(AppError::from)?;
 
+    // Fetch targets for this endpoint
+    let targets = state.db.list_targets(&endpoint.id).await.map_err(AppError::from)?;
+    
     let mut outcomes = Vec::new();
-    for target_id in endpoint.target_ids {
-        let outcome = dispatch_to_target(&state, &event, &target_id).await;
+    for target in targets {
+        let outcome = dispatch_to_target(&state, &event, &target).await;
         outcomes.push(outcome);
     }
 
@@ -148,45 +172,17 @@ pub async fn ingress(
 async fn dispatch_to_target(
     state: &AppState,
     event: &UemEvent,
-    target_id: &str,
+    target: &Target,
 ) -> DeliveryOutcome {
-    let target = match state.db.get_target(target_id).await {
-        Ok(Some(target)) => target,
-        Ok(None) => {
-            let _ = state
-                .db
-                .insert_delivery(&event.id, target_id, "failed", None, Some("target not found".to_string()))
-                .await;
-            return DeliveryOutcome {
-                target_id: target_id.to_string(),
-                status: "failed".to_string(),
-                response_code: None,
-                error: Some("target not found".to_string()),
-            };
-        }
-        Err(err) => {
-            let _ = state
-                .db
-                .insert_delivery(&event.id, target_id, "failed", None, Some(err.to_string()))
-                .await;
-            return DeliveryOutcome {
-                target_id: target_id.to_string(),
-                status: "failed".to_string(),
-                response_code: None,
-                error: Some(err.to_string()),
-            };
-        }
-    };
-
     let adapter = match egress_adapter(&target.kind) {
         Some(adapter) => adapter,
         None => {
             let _ = state
                 .db
-                .insert_delivery(&event.id, target_id, "failed", None, Some("unsupported target".to_string()))
+                .insert_delivery(&event.id, &target.id, "failed", None, Some("unsupported target".to_string()))
                 .await;
             return DeliveryOutcome {
-                target_id: target_id.to_string(),
+                target_id: target.id.clone(),
                 status: "failed".to_string(),
                 response_code: None,
                 error: Some("unsupported target".to_string()),
@@ -199,10 +195,10 @@ async fn dispatch_to_target(
         Err(err) => {
             let _ = state
                 .db
-                .insert_delivery(&event.id, target_id, "failed", None, Some(err.message.clone()))
+                .insert_delivery(&event.id, &target.id, "failed", None, Some(err.message.clone()))
                 .await;
             return DeliveryOutcome {
-                target_id: target_id.to_string(),
+                target_id: target.id.clone(),
                 status: "failed".to_string(),
                 response_code: None,
                 error: Some(err.message),
@@ -236,10 +232,10 @@ async fn dispatch_to_target(
             };
             let _ = state
                 .db
-                .insert_delivery(&event.id, target_id, status, Some(code), error.clone())
+                .insert_delivery(&event.id, &target.id, status, Some(code), error.clone())
                 .await;
             DeliveryOutcome {
-                target_id: target_id.to_string(),
+                target_id: target.id.clone(),
                 status: status.to_string(),
                 response_code: Some(code),
                 error,
@@ -249,10 +245,10 @@ async fn dispatch_to_target(
             let message = err.to_string();
             let _ = state
                 .db
-                .insert_delivery(&event.id, target_id, "failed", None, Some(message.clone()))
+                .insert_delivery(&event.id, &target.id, "failed", None, Some(message.clone()))
                 .await;
             DeliveryOutcome {
-                target_id: target_id.to_string(),
+                target_id: target.id.clone(),
                 status: "failed".to_string(),
                 response_code: None,
                 error: Some(message),
@@ -263,7 +259,10 @@ async fn dispatch_to_target(
 
 #[utoipa::path(
     post,
-    path = "/api/targets",
+    path = "/api/endpoints/{id}/targets",
+    params(
+        ("id" = String, Path, description = "Endpoint ID")
+    ),
     request_body = CreateTargetRequest,
     responses(
         (status = 200, description = "Target created successfully", body = Target),
@@ -274,16 +273,25 @@ async fn dispatch_to_target(
     )
 )]
 async fn create_target(
+    Path(endpoint_id): Path<String>,
     State(state): State<AppState>,
     Json(req): Json<CreateTargetRequest>,
 ) -> Result<Json<Target>, AppError> {
-    let target = state.db.create_target(req).await.map_err(AppError::from)?;
+    // Verify endpoint exists
+    if state.db.get_endpoint(&endpoint_id).await.map_err(AppError::from)?.is_none() {
+        return Err(AppError::not_found("endpoint not found"));
+    }
+
+    let target = state.db.create_target(&endpoint_id, req).await.map_err(AppError::from)?;
     Ok(Json(target))
 }
 
 #[utoipa::path(
     get,
-    path = "/api/targets",
+    path = "/api/endpoints/{id}/targets",
+    params(
+        ("id" = String, Path, description = "Endpoint ID")
+    ),
     responses(
         (status = 200, description = "List of targets", body = [Target])
     ),
@@ -291,16 +299,20 @@ async fn create_target(
         ("basic_auth" = [])
     )
 )]
-async fn list_targets(State(state): State<AppState>) -> Result<Json<Vec<Target>>, AppError> {
-    let targets = state.db.list_targets().await.map_err(AppError::from)?;
+async fn list_targets(
+    Path(endpoint_id): Path<String>,
+    State(state): State<AppState>,
+) -> Result<Json<Vec<Target>>, AppError> {
+    let targets = state.db.list_targets(&endpoint_id).await.map_err(AppError::from)?;
     Ok(Json(targets))
 }
 
 #[utoipa::path(
     delete,
-    path = "/api/targets/{id}",
+    path = "/api/endpoints/{id}/targets/{target_id}",
     params(
-        ("id" = String, Path, description = "Target ID")
+         ("id" = String, Path, description = "Endpoint ID"),
+         ("target_id" = String, Path, description = "Target ID")
     ),
     responses(
         (status = 204, description = "Target deleted successfully"),
@@ -311,10 +323,10 @@ async fn list_targets(State(state): State<AppState>) -> Result<Json<Vec<Target>>
     )
 )]
 async fn delete_target(
-    Path(id): Path<String>,
+    Path((_endpoint_id, target_id)): Path<(String, String)>,
     State(state): State<AppState>,
 ) -> Result<StatusCode, AppError> {
-    let affected = state.db.delete_target(&id).await.map_err(AppError::from)?;
+    let affected = state.db.delete_target(&target_id).await.map_err(AppError::from)?;
     if affected == 0 {
         return Err(AppError::not_found("target not found"));
     }
@@ -381,12 +393,39 @@ async fn update_endpoint(
     State(state): State<AppState>,
     Json(req): Json<UpdateEndpointRequest>,
 ) -> Result<Json<Endpoint>, AppError> {
-    if req.name.is_none() && req.target_ids.is_none() {
+    if req.name.is_none() {
         return Err(AppError::bad_request("no fields to update"));
     }
     let endpoint = state
         .db
         .update_endpoint(&id, req)
+        .await
+        .map_err(AppError::from)?;
+    let endpoint = endpoint.ok_or_else(|| AppError::not_found("endpoint not found"))?;
+    Ok(Json(endpoint))
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/endpoints/{id}",
+    params(
+        ("id" = String, Path, description = "Endpoint ID")
+    ),
+    responses(
+        (status = 200, description = "Endpoint details", body = Endpoint),
+        (status = 404, description = "Endpoint not found", body = AppErrorResponse)
+    ),
+    security(
+        ("basic_auth" = [])
+    )
+)]
+async fn get_endpoint(
+    Path(id): Path<String>,
+    State(state): State<AppState>,
+) -> Result<Json<Endpoint>, AppError> {
+    let endpoint = state
+        .db
+        .get_endpoint(&id)
         .await
         .map_err(AppError::from)?;
     let endpoint = endpoint.ok_or_else(|| AppError::not_found("endpoint not found"))?;

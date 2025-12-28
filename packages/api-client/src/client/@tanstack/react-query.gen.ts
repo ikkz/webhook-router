@@ -3,8 +3,8 @@
 import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen.js';
-import { createEndpoint, createTarget, deleteTarget, healthz, ingress, listEndpoints, listEvents, listTargets, type Options, updateEndpoint } from '../sdk.gen.js';
-import type { CreateEndpointData, CreateEndpointError, CreateEndpointResponse, CreateTargetData, CreateTargetError, CreateTargetResponse, DeleteTargetData, DeleteTargetError, DeleteTargetResponse, HealthzData, HealthzResponse, IngressData, IngressError, ListEndpointsData, ListEndpointsResponse, ListEventsData, ListEventsResponse, ListTargetsData, ListTargetsResponse, UpdateEndpointData, UpdateEndpointError, UpdateEndpointResponse } from '../types.gen.js';
+import { checkAuth, createEndpoint, createTarget, deleteTarget, getEndpoint, healthz, ingress, listEndpoints, listEvents, listTargets, type Options, updateEndpoint } from '../sdk.gen.js';
+import type { CheckAuthData, CreateEndpointData, CreateEndpointError, CreateEndpointResponse, CreateTargetData, CreateTargetError, CreateTargetResponse, DeleteTargetData, DeleteTargetError, DeleteTargetResponse, GetEndpointData, GetEndpointError, GetEndpointResponse, HealthzData, HealthzResponse, IngressData, IngressError, ListEndpointsData, ListEndpointsResponse, ListEventsData, ListEventsResponse, ListTargetsData, ListTargetsResponse, UpdateEndpointData, UpdateEndpointError, UpdateEndpointResponse } from '../types.gen.js';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -39,6 +39,21 @@ const createQueryKey = <TOptions extends Options>(id: string, options?: TOptions
     return [params];
 };
 
+export const checkAuthQueryKey = (options?: Options<CheckAuthData>) => createQueryKey('checkAuth', options);
+
+export const checkAuthOptions = (options?: Options<CheckAuthData>) => queryOptions<unknown, DefaultError, unknown, ReturnType<typeof checkAuthQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await checkAuth({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: checkAuthQueryKey(options)
+});
+
 export const listEndpointsQueryKey = (options?: Options<ListEndpointsData>) => createQueryKey('listEndpoints', options);
 
 export const listEndpointsOptions = (options?: Options<ListEndpointsData>) => queryOptions<ListEndpointsResponse, DefaultError, ListEndpointsResponse, ReturnType<typeof listEndpointsQueryKey>>({
@@ -68,6 +83,21 @@ export const createEndpointMutation = (options?: Partial<Options<CreateEndpointD
     return mutationOptions;
 };
 
+export const getEndpointQueryKey = (options: Options<GetEndpointData>) => createQueryKey('getEndpoint', options);
+
+export const getEndpointOptions = (options: Options<GetEndpointData>) => queryOptions<GetEndpointResponse, GetEndpointError, GetEndpointResponse, ReturnType<typeof getEndpointQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getEndpoint({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getEndpointQueryKey(options)
+});
+
 export const updateEndpointMutation = (options?: Partial<Options<UpdateEndpointData>>): UseMutationOptions<UpdateEndpointResponse, UpdateEndpointError, Options<UpdateEndpointData>> => {
     const mutationOptions: UseMutationOptions<UpdateEndpointResponse, UpdateEndpointError, Options<UpdateEndpointData>> = {
         mutationFn: async (fnOptions) => {
@@ -82,24 +112,9 @@ export const updateEndpointMutation = (options?: Partial<Options<UpdateEndpointD
     return mutationOptions;
 };
 
-export const listEventsQueryKey = (options?: Options<ListEventsData>) => createQueryKey('listEvents', options);
+export const listTargetsQueryKey = (options: Options<ListTargetsData>) => createQueryKey('listTargets', options);
 
-export const listEventsOptions = (options?: Options<ListEventsData>) => queryOptions<ListEventsResponse, DefaultError, ListEventsResponse, ReturnType<typeof listEventsQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await listEvents({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: listEventsQueryKey(options)
-});
-
-export const listTargetsQueryKey = (options?: Options<ListTargetsData>) => createQueryKey('listTargets', options);
-
-export const listTargetsOptions = (options?: Options<ListTargetsData>) => queryOptions<ListTargetsResponse, DefaultError, ListTargetsResponse, ReturnType<typeof listTargetsQueryKey>>({
+export const listTargetsOptions = (options: Options<ListTargetsData>) => queryOptions<ListTargetsResponse, DefaultError, ListTargetsResponse, ReturnType<typeof listTargetsQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
         const { data } = await listTargets({
             ...options,
@@ -139,6 +154,21 @@ export const deleteTargetMutation = (options?: Partial<Options<DeleteTargetData>
     };
     return mutationOptions;
 };
+
+export const listEventsQueryKey = (options?: Options<ListEventsData>) => createQueryKey('listEvents', options);
+
+export const listEventsOptions = (options?: Options<ListEventsData>) => queryOptions<ListEventsResponse, DefaultError, ListEventsResponse, ReturnType<typeof listEventsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await listEvents({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: listEventsQueryKey(options)
+});
 
 export const healthzQueryKey = (options?: Options<HealthzData>) => createQueryKey('healthz', options);
 

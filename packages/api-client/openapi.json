@@ -9,6 +9,30 @@
     "version": "0.1.0"
   },
   "paths": {
+    "/api/auth/check": {
+      "get": {
+        "tags": [],
+        "operationId": "check_auth",
+        "responses": {
+          "200": {
+            "description": "Auth check",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "basic_auth": []
+          }
+        ]
+      }
+    },
     "/api/endpoints": {
       "get": {
         "tags": [],
@@ -77,6 +101,48 @@
       }
     },
     "/api/endpoints/{id}": {
+      "get": {
+        "tags": [],
+        "operationId": "get_endpoint",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Endpoint ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Endpoint details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Endpoint"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Endpoint not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "basic_auth": []
+          }
+        ]
+      },
       "put": {
         "tags": [],
         "operationId": "update_endpoint",
@@ -140,36 +206,21 @@
         ]
       }
     },
-    "/api/events": {
-      "get": {
-        "tags": [],
-        "operationId": "list_events",
-        "responses": {
-          "200": {
-            "description": "List of events",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/EventRecord"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "basic_auth": []
-          }
-        ]
-      }
-    },
-    "/api/targets": {
+    "/api/endpoints/{id}/targets": {
       "get": {
         "tags": [],
         "operationId": "list_targets",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Endpoint ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "List of targets",
@@ -194,6 +245,17 @@
       "post": {
         "tags": [],
         "operationId": "create_target",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Endpoint ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -233,13 +295,22 @@
         ]
       }
     },
-    "/api/targets/{id}": {
+    "/api/endpoints/{id}/targets/{target_id}": {
       "delete": {
         "tags": [],
         "operationId": "delete_target",
         "parameters": [
           {
             "name": "id",
+            "in": "path",
+            "description": "Endpoint ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "target_id",
             "in": "path",
             "description": "Target ID",
             "required": true,
@@ -258,6 +329,32 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AppErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "basic_auth": []
+          }
+        ]
+      }
+    },
+    "/api/events": {
+      "get": {
+        "tags": [],
+        "operationId": "list_events",
+        "responses": {
+          "200": {
+            "description": "List of events",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EventRecord"
+                  }
                 }
               }
             }
@@ -369,18 +466,11 @@
       "CreateEndpointRequest": {
         "type": "object",
         "required": [
-          "name",
-          "target_ids"
+          "name"
         ],
         "properties": {
           "name": {
             "type": "string"
-          },
-          "target_ids": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
           }
         }
       },
@@ -438,7 +528,6 @@
         "required": [
           "id",
           "name",
-          "target_ids",
           "created_at"
         ],
         "properties": {
@@ -451,12 +540,6 @@
           },
           "name": {
             "type": "string"
-          },
-          "target_ids": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
           }
         }
       },
@@ -500,6 +583,7 @@
         "type": "object",
         "required": [
           "id",
+          "endpoint_id",
           "name",
           "kind",
           "url",
@@ -509,6 +593,9 @@
           "created_at": {
             "type": "integer",
             "format": "int64"
+          },
+          "endpoint_id": {
+            "type": "string"
           },
           "headers": {},
           "id": {
@@ -567,15 +654,6 @@
               "string",
               "null"
             ]
-          },
-          "target_ids": {
-            "type": [
-              "array",
-              "null"
-            ],
-            "items": {
-              "type": "string"
-            }
           }
         }
       }

@@ -6,6 +6,9 @@ import { routeTree } from './routes';
 export const router = createRouter({
     routeTree,
     history: createHashHistory(),
+    context: {
+        auth: undefined!, // This will be set in RouterProvider
+    },
 });
 
 // Register the router instance for type safety

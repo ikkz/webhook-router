@@ -2,7 +2,7 @@
 
 import { client } from './client.gen.js';
 import type { Client, Options as Options2, TDataShape } from './client/index.js';
-import type { CreateEndpointData, CreateEndpointErrors, CreateEndpointResponses, CreateTargetData, CreateTargetErrors, CreateTargetResponses, DeleteTargetData, DeleteTargetErrors, DeleteTargetResponses, HealthzData, HealthzResponses, IngressData, IngressErrors, IngressResponses, ListEndpointsData, ListEndpointsResponses, ListEventsData, ListEventsResponses, ListTargetsData, ListTargetsResponses, UpdateEndpointData, UpdateEndpointErrors, UpdateEndpointResponses } from './types.gen.js';
+import type { CheckAuthData, CheckAuthErrors, CheckAuthResponses, CreateEndpointData, CreateEndpointErrors, CreateEndpointResponses, CreateTargetData, CreateTargetErrors, CreateTargetResponses, DeleteTargetData, DeleteTargetErrors, DeleteTargetResponses, GetEndpointData, GetEndpointErrors, GetEndpointResponses, HealthzData, HealthzResponses, IngressData, IngressErrors, IngressResponses, ListEndpointsData, ListEndpointsResponses, ListEventsData, ListEventsResponses, ListTargetsData, ListTargetsResponses, UpdateEndpointData, UpdateEndpointErrors, UpdateEndpointResponses } from './types.gen.js';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -18,6 +18,8 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
     meta?: Record<string, unknown>;
 };
 
+export const checkAuth = <ThrowOnError extends boolean = false>(options?: Options<CheckAuthData, ThrowOnError>) => (options?.client ?? client).get<CheckAuthResponses, CheckAuthErrors, ThrowOnError>({ url: '/api/auth/check', ...options });
+
 export const listEndpoints = <ThrowOnError extends boolean = false>(options?: Options<ListEndpointsData, ThrowOnError>) => (options?.client ?? client).get<ListEndpointsResponses, unknown, ThrowOnError>({ url: '/api/endpoints', ...options });
 
 export const createEndpoint = <ThrowOnError extends boolean = false>(options: Options<CreateEndpointData, ThrowOnError>) => (options.client ?? client).post<CreateEndpointResponses, CreateEndpointErrors, ThrowOnError>({
@@ -29,6 +31,8 @@ export const createEndpoint = <ThrowOnError extends boolean = false>(options: Op
     }
 });
 
+export const getEndpoint = <ThrowOnError extends boolean = false>(options: Options<GetEndpointData, ThrowOnError>) => (options.client ?? client).get<GetEndpointResponses, GetEndpointErrors, ThrowOnError>({ url: '/api/endpoints/{id}', ...options });
+
 export const updateEndpoint = <ThrowOnError extends boolean = false>(options: Options<UpdateEndpointData, ThrowOnError>) => (options.client ?? client).put<UpdateEndpointResponses, UpdateEndpointErrors, ThrowOnError>({
     url: '/api/endpoints/{id}',
     ...options,
@@ -38,12 +42,10 @@ export const updateEndpoint = <ThrowOnError extends boolean = false>(options: Op
     }
 });
 
-export const listEvents = <ThrowOnError extends boolean = false>(options?: Options<ListEventsData, ThrowOnError>) => (options?.client ?? client).get<ListEventsResponses, unknown, ThrowOnError>({ url: '/api/events', ...options });
-
-export const listTargets = <ThrowOnError extends boolean = false>(options?: Options<ListTargetsData, ThrowOnError>) => (options?.client ?? client).get<ListTargetsResponses, unknown, ThrowOnError>({ url: '/api/targets', ...options });
+export const listTargets = <ThrowOnError extends boolean = false>(options: Options<ListTargetsData, ThrowOnError>) => (options.client ?? client).get<ListTargetsResponses, unknown, ThrowOnError>({ url: '/api/endpoints/{id}/targets', ...options });
 
 export const createTarget = <ThrowOnError extends boolean = false>(options: Options<CreateTargetData, ThrowOnError>) => (options.client ?? client).post<CreateTargetResponses, CreateTargetErrors, ThrowOnError>({
-    url: '/api/targets',
+    url: '/api/endpoints/{id}/targets',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -51,7 +53,9 @@ export const createTarget = <ThrowOnError extends boolean = false>(options: Opti
     }
 });
 
-export const deleteTarget = <ThrowOnError extends boolean = false>(options: Options<DeleteTargetData, ThrowOnError>) => (options.client ?? client).delete<DeleteTargetResponses, DeleteTargetErrors, ThrowOnError>({ url: '/api/targets/{id}', ...options });
+export const deleteTarget = <ThrowOnError extends boolean = false>(options: Options<DeleteTargetData, ThrowOnError>) => (options.client ?? client).delete<DeleteTargetResponses, DeleteTargetErrors, ThrowOnError>({ url: '/api/endpoints/{id}/targets/{target_id}', ...options });
+
+export const listEvents = <ThrowOnError extends boolean = false>(options?: Options<ListEventsData, ThrowOnError>) => (options?.client ?? client).get<ListEventsResponses, unknown, ThrowOnError>({ url: '/api/events', ...options });
 
 export const healthz = <ThrowOnError extends boolean = false>(options?: Options<HealthzData, ThrowOnError>) => (options?.client ?? client).get<HealthzResponses, unknown, ThrowOnError>({ url: '/healthz', ...options });
 

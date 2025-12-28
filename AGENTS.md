@@ -26,6 +26,10 @@ This repo uses Codex-style coding agents. Keep instructions short, concrete, and
 - Update `docs/tech-plan.md` if architecture changes.
 - Adapter formats live in `docs/adapters/`.
 
+## Client Generation
+
+- To generate the API client: `nx run @webhook-router/api-client:generate`
+
 <!-- nx configuration start-->
 <!-- Leave the start & end comments to automatically receive updates. -->
 

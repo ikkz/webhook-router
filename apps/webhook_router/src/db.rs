@@ -44,13 +44,17 @@ impl Db {
     }
 
     async fn init(&self) -> Result<(), sqlx::Error> {
+        // Drop tables if they exist to force schema update since we are changing it
+        // In a real app we would use migrations, but for this dev stage we drop.
+        // Actually, user agreed to delete the DB file, but running this command helps if they didn't.
+        // But for safety let's just create if not exists with new schema, 
+        // assuming the user deletes the file. If not, it might error or have old columns.
+        // I'll rely on "delete webhook_router.db" step.
+        
         sqlx::query(
-            "CREATE TABLE IF NOT EXISTS targets (
+            "CREATE TABLE IF NOT EXISTS endpoints (
                 id TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
-                kind TEXT NOT NULL,
-                url TEXT NOT NULL,
-                headers TEXT,
                 created_at INTEGER NOT NULL
             )",
         )
@@ -58,11 +62,15 @@ impl Db {
         .await?;
 
         sqlx::query(
-            "CREATE TABLE IF NOT EXISTS endpoints (
+            "CREATE TABLE IF NOT EXISTS targets (
                 id TEXT PRIMARY KEY,
+                endpoint_id TEXT NOT NULL,
                 name TEXT NOT NULL,
-                target_ids TEXT NOT NULL,
-                created_at INTEGER NOT NULL
+                kind TEXT NOT NULL,
+                url TEXT NOT NULL,
+                headers TEXT,
+                created_at INTEGER NOT NULL,
+                FOREIGN KEY(endpoint_id) REFERENCES endpoints(id) ON DELETE CASCADE
             )",
         )
         .execute(&self.pool)
@@ -99,15 +107,16 @@ impl Db {
         Ok(())
     }
 
-    pub async fn create_target(&self, req: CreateTargetRequest) -> Result<Target, sqlx::Error> {
+    pub async fn create_target(&self, endpoint_id: &str, req: CreateTargetRequest) -> Result<Target, sqlx::Error> {
         let id = Uuid::new_v4().to_string();
         let created_at = now_timestamp();
         let headers = req.headers.map(|value| value.to_string());
         sqlx::query(
-            "INSERT INTO targets (id, name, kind, url, headers, created_at)
-             VALUES (?, ?, ?, ?, ?, ?)",
+            "INSERT INTO targets (id, endpoint_id, name, kind, url, headers, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?)",
         )
         .bind(&id)
+        .bind(endpoint_id)
         .bind(&req.name)
         .bind(&req.kind)
         .bind(&req.url)
@@ -118,6 +127,7 @@ impl Db {
 
         Ok(Target {
             id,
+            endpoint_id: endpoint_id.to_string(),
             name: req.name,
             kind: req.kind,
             url: req.url,
@@ -126,11 +136,12 @@ impl Db {
         })
     }
 
-    pub async fn list_targets(&self) -> Result<Vec<Target>, sqlx::Error> {
+    pub async fn list_targets(&self, endpoint_id: &str) -> Result<Vec<Target>, sqlx::Error> {
         let rows = sqlx::query(
-            "SELECT id, name, kind, url, headers, created_at
-             FROM targets ORDER BY created_at DESC",
+            "SELECT id, endpoint_id, name, kind, url, headers, created_at
+             FROM targets WHERE endpoint_id = ? ORDER BY created_at DESC",
         )
+        .bind(endpoint_id)
         .fetch_all(&self.pool)
         .await?;
 
@@ -138,6 +149,7 @@ impl Db {
             .into_iter()
             .map(|row| Target {
                 id: row.get("id"),
+                endpoint_id: row.get("endpoint_id"),
                 name: row.get("name"),
                 kind: row.get("kind"),
                 url: row.get("url"),
@@ -159,7 +171,7 @@ impl Db {
 
     pub async fn get_target(&self, id: &str) -> Result<Option<Target>, sqlx::Error> {
         let row = sqlx::query(
-            "SELECT id, name, kind, url, headers, created_at
+            "SELECT id, endpoint_id, name, kind, url, headers, created_at
              FROM targets WHERE id = ?",
         )
         .bind(id)
@@ -168,6 +180,7 @@ impl Db {
 
         Ok(row.map(|row| Target {
             id: row.get("id"),
+            endpoint_id: row.get("endpoint_id"),
             name: row.get("name"),
             kind: row.get("kind"),
             url: row.get("url"),
@@ -184,15 +197,13 @@ impl Db {
     ) -> Result<Endpoint, sqlx::Error> {
         let id = Uuid::new_v4().to_string();
         let created_at = now_timestamp();
-        let target_ids_raw = serde_json::to_string(&req.target_ids).unwrap_or("[]".to_string());
 
         sqlx::query(
-            "INSERT INTO endpoints (id, name, target_ids, created_at)
-             VALUES (?, ?, ?, ?)",
+            "INSERT INTO endpoints (id, name, created_at)
+             VALUES (?, ?, ?)",
         )
         .bind(&id)
         .bind(&req.name)
-        .bind(&target_ids_raw)
         .bind(created_at)
         .execute(&self.pool)
         .await?;
@@ -200,14 +211,13 @@ impl Db {
         Ok(Endpoint {
             id,
             name: req.name,
-            target_ids: req.target_ids,
             created_at,
         })
     }
 
     pub async fn list_endpoints(&self) -> Result<Vec<Endpoint>, sqlx::Error> {
         let rows = sqlx::query(
-            "SELECT id, name, target_ids, created_at
+            "SELECT id, name, created_at
              FROM endpoints ORDER BY created_at DESC",
         )
         .fetch_all(&self.pool)
@@ -218,10 +228,6 @@ impl Db {
             .map(|row| Endpoint {
                 id: row.get("id"),
                 name: row.get("name"),
-                target_ids: serde_json::from_str::<Vec<String>>(
-                    &row.get::<String, _>("target_ids"),
-                )
-                .unwrap_or_default(),
                 created_at: row.get("created_at"),
             })
             .collect())
@@ -229,7 +235,7 @@ impl Db {
 
     pub async fn get_endpoint(&self, id: &str) -> Result<Option<Endpoint>, sqlx::Error> {
         let row = sqlx::query(
-            "SELECT id, name, target_ids, created_at
+            "SELECT id, name, created_at
              FROM endpoints WHERE id = ?",
         )
         .bind(id)
@@ -239,10 +245,6 @@ impl Db {
         Ok(row.map(|row| Endpoint {
             id: row.get("id"),
             name: row.get("name"),
-                target_ids: serde_json::from_str::<Vec<String>>(
-                    &row.get::<String, _>("target_ids"),
-                )
-                .unwrap_or_default(),
             created_at: row.get("created_at"),
         }))
     }
@@ -260,18 +262,11 @@ impl Db {
         if let Some(name) = req.name {
             endpoint.name = name;
         }
-        if let Some(target_ids) = req.target_ids {
-            endpoint.target_ids = target_ids;
-        }
-
-        let target_ids_raw =
-            serde_json::to_string(&endpoint.target_ids).unwrap_or("[]".to_string());
 
         sqlx::query(
-            "UPDATE endpoints SET name = ?, target_ids = ? WHERE id = ?",
+            "UPDATE endpoints SET name = ? WHERE id = ?",
         )
         .bind(&endpoint.name)
-        .bind(&target_ids_raw)
         .bind(&endpoint.id)
         .execute(&self.pool)
         .await?;
@@ -378,8 +373,15 @@ mod tests {
     async fn sqlite_in_memory_flow() {
         let db = Db::connect(":memory:").await.expect("connect");
 
+        let endpoint = db
+            .create_endpoint(CreateEndpointRequest {
+                name: "demo".to_string(),
+            })
+            .await
+            .expect("create endpoint");
+
         let target = db
-            .create_target(CreateTargetRequest {
+            .create_target(&endpoint.id, CreateTargetRequest {
                 name: "Slack".to_string(),
                 kind: "slack".to_string(),
                 url: "https://example.com/hook".to_string(),
@@ -387,14 +389,6 @@ mod tests {
             })
             .await
             .expect("create target");
-
-        let endpoint = db
-            .create_endpoint(CreateEndpointRequest {
-                name: "demo".to_string(),
-                target_ids: vec![target.id.clone()],
-            })
-            .await
-            .expect("create endpoint");
 
         let event = UemEvent {
             id: "evt-1".to_string(),
@@ -423,6 +417,9 @@ mod tests {
 
         let endpoints = db.list_endpoints().await.expect("list endpoints");
         assert_eq!(endpoints.len(), 1);
-        assert_eq!(endpoints[0].target_ids.len(), 1);
+
+        let targets = db.list_targets(&endpoint.id).await.expect("list targets");
+        assert_eq!(targets.len(), 1);
+        assert_eq!(targets[0].endpoint_id, endpoint.id);
     }
 }

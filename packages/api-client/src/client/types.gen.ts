@@ -10,7 +10,6 @@ export type AppErrorResponse = {
 
 export type CreateEndpointRequest = {
     name: string;
-    target_ids: Array<string>;
 };
 
 export type CreateTargetRequest = {
@@ -31,7 +30,6 @@ export type Endpoint = {
     created_at: number;
     id: string;
     name: string;
-    target_ids: Array<string>;
 };
 
 export type EventRecord = {
@@ -46,6 +44,7 @@ export type EventRecord = {
 
 export type Target = {
     created_at: number;
+    endpoint_id: string;
     headers?: unknown;
     id: string;
     kind: string;
@@ -65,7 +64,27 @@ export type UemEvent = {
 
 export type UpdateEndpointRequest = {
     name?: string | null;
-    target_ids?: Array<string> | null;
+};
+
+export type CheckAuthData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/auth/check';
+};
+
+export type CheckAuthErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+};
+
+export type CheckAuthResponses = {
+    /**
+     * Auth check
+     */
+    200: unknown;
 };
 
 export type ListEndpointsData = {
@@ -109,6 +128,36 @@ export type CreateEndpointResponses = {
 
 export type CreateEndpointResponse = CreateEndpointResponses[keyof CreateEndpointResponses];
 
+export type GetEndpointData = {
+    body?: never;
+    path: {
+        /**
+         * Endpoint ID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/endpoints/{id}';
+};
+
+export type GetEndpointErrors = {
+    /**
+     * Endpoint not found
+     */
+    404: AppErrorResponse;
+};
+
+export type GetEndpointError = GetEndpointErrors[keyof GetEndpointErrors];
+
+export type GetEndpointResponses = {
+    /**
+     * Endpoint details
+     */
+    200: Endpoint;
+};
+
+export type GetEndpointResponse = GetEndpointResponses[keyof GetEndpointResponses];
+
 export type UpdateEndpointData = {
     body: UpdateEndpointRequest;
     path: {
@@ -143,27 +192,16 @@ export type UpdateEndpointResponses = {
 
 export type UpdateEndpointResponse = UpdateEndpointResponses[keyof UpdateEndpointResponses];
 
-export type ListEventsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/events';
-};
-
-export type ListEventsResponses = {
-    /**
-     * List of events
-     */
-    200: Array<EventRecord>;
-};
-
-export type ListEventsResponse = ListEventsResponses[keyof ListEventsResponses];
-
 export type ListTargetsData = {
     body?: never;
-    path?: never;
+    path: {
+        /**
+         * Endpoint ID
+         */
+        id: string;
+    };
     query?: never;
-    url: '/api/targets';
+    url: '/api/endpoints/{id}/targets';
 };
 
 export type ListTargetsResponses = {
@@ -177,9 +215,14 @@ export type ListTargetsResponse = ListTargetsResponses[keyof ListTargetsResponse
 
 export type CreateTargetData = {
     body: CreateTargetRequest;
-    path?: never;
+    path: {
+        /**
+         * Endpoint ID
+         */
+        id: string;
+    };
     query?: never;
-    url: '/api/targets';
+    url: '/api/endpoints/{id}/targets';
 };
 
 export type CreateTargetErrors = {
@@ -204,12 +247,16 @@ export type DeleteTargetData = {
     body?: never;
     path: {
         /**
-         * Target ID
+         * Endpoint ID
          */
         id: string;
+        /**
+         * Target ID
+         */
+        target_id: string;
     };
     query?: never;
-    url: '/api/targets/{id}';
+    url: '/api/endpoints/{id}/targets/{target_id}';
 };
 
 export type DeleteTargetErrors = {
@@ -229,6 +276,22 @@ export type DeleteTargetResponses = {
 };
 
 export type DeleteTargetResponse = DeleteTargetResponses[keyof DeleteTargetResponses];
+
+export type ListEventsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/events';
+};
+
+export type ListEventsResponses = {
+    /**
+     * List of events
+     */
+    200: Array<EventRecord>;
+};
+
+export type ListEventsResponse = ListEventsResponses[keyof ListEventsResponses];
 
 export type HealthzData = {
     body?: never;
