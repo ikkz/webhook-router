@@ -16,10 +16,10 @@
     }
   },
   "dependencies": {
-    "tslib": "^2.3.0"
+    "tslib": "^2.3.0",
+    "@tanstack/react-query": "^5.90.13"
   },
   "devDependencies": {
-    "@hey-api/openapi-ts": "^0.89.2",
-    "@tanstack/react-query": "^5.90.13"
+    "@hey-api/openapi-ts": "^0.89.2"
   }
 }
