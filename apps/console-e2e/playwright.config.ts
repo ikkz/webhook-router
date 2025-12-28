@@ -39,7 +39,7 @@ export default defineConfig({
     url: baseURL,
     reuseExistingServer: true,
     cwd: workspaceRoot,
-    timeout: 120000,
+    timeout: 600000,
   },
   projects: [
     {
