@@ -1,0 +1,590 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "webhook_router",
+    "description": "",
+    "license": {
+      "name": ""
+    },
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/endpoints": {
+      "get": {
+        "tags": [],
+        "operationId": "list_endpoints",
+        "responses": {
+          "200": {
+            "description": "List of endpoints",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Endpoint"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "basic_auth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [],
+        "operationId": "create_endpoint",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEndpointRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Endpoint created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Endpoint"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "basic_auth": []
+          }
+        ]
+      }
+    },
+    "/api/endpoints/{id}": {
+      "put": {
+        "tags": [],
+        "operationId": "update_endpoint",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Endpoint ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateEndpointRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Endpoint updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Endpoint"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Endpoint not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "basic_auth": []
+          }
+        ]
+      }
+    },
+    "/api/events": {
+      "get": {
+        "tags": [],
+        "operationId": "list_events",
+        "responses": {
+          "200": {
+            "description": "List of events",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EventRecord"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "basic_auth": []
+          }
+        ]
+      }
+    },
+    "/api/targets": {
+      "get": {
+        "tags": [],
+        "operationId": "list_targets",
+        "responses": {
+          "200": {
+            "description": "List of targets",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Target"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "basic_auth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [],
+        "operationId": "create_target",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTargetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Target created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Target"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "basic_auth": []
+          }
+        ]
+      }
+    },
+    "/api/targets/{id}": {
+      "delete": {
+        "tags": [],
+        "operationId": "delete_target",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Target ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Target deleted successfully"
+          },
+          "404": {
+            "description": "Target not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "basic_auth": []
+          }
+        ]
+      }
+    },
+    "/healthz": {
+      "get": {
+        "tags": [],
+        "operationId": "healthz",
+        "responses": {
+          "200": {
+            "description": "Health check",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ingress/{endpoint_id}/{platform}": {
+      "post": {
+        "tags": [],
+        "operationId": "ingress",
+        "parameters": [
+          {
+            "name": "endpoint_id",
+            "in": "path",
+            "description": "Endpoint ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "platform",
+            "in": "path",
+            "description": "Platform name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Event processed successfully",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Endpoint not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AppErrorResponse": {
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateEndpointRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "target_ids"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "target_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "CreateTargetRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "kind",
+          "url"
+        ],
+        "properties": {
+          "headers": {},
+          "kind": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      },
+      "DeliveryOutcome": {
+        "type": "object",
+        "required": [
+          "target_id",
+          "status"
+        ],
+        "properties": {
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "response_code": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "minimum": 0
+          },
+          "status": {
+            "type": "string"
+          },
+          "target_id": {
+            "type": "string"
+          }
+        }
+      },
+      "Endpoint": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "target_ids",
+          "created_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "target_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "EventRecord": {
+        "type": "object",
+        "required": [
+          "id",
+          "endpoint_id",
+          "platform",
+          "markdown",
+          "raw",
+          "created_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "endpoint_id": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "markdown": {
+            "type": "string"
+          },
+          "platform": {
+            "type": "string"
+          },
+          "raw": {},
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "Target": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "url",
+          "created_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "headers": {},
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      },
+      "UemEvent": {
+        "type": "object",
+        "required": [
+          "id",
+          "source",
+          "timestamp",
+          "markdown",
+          "raw",
+          "meta"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "markdown": {
+            "type": "string"
+          },
+          "meta": {},
+          "raw": {},
+          "source": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "UpdateEndpointRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "target_ids": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "webhook-router",
+      "description": "Webhook Router API"
+    }
+  ]
+}

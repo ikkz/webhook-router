@@ -26,6 +26,8 @@ struct Args {
     username: String,
     #[arg(long)]
     password: String,
+    #[arg(long)]
+    generate_openapi: bool,
 }
 
 #[tokio::main]
@@ -35,6 +37,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .init();
 
     let args = Args::parse();
+
+    if args.generate_openapi {
+        let doc = ApiDoc::openapi();
+        println!("{}", doc.to_pretty_json().unwrap());
+        return Ok(());
+    }
+
     let db = db::Db::connect(&args.db_path).await?;
 
     let state = AppState {

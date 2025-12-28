@@ -62,6 +62,13 @@
           "release": true
         }
       }
+    },
+    "generate-openapi": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/webhook_router",
+        "command": "cargo run -- --username=placeholder --password=placeholder --generate-openapi > ../../packages/api-client/openapi.json"
+      }
     }
   },
   "tags": []

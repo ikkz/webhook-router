@@ -1,0 +1,24 @@
+{
+    "name": "@webhook-router/api-client",
+    "targets": {
+        "generate": {
+            "executor": "nx:run-commands",
+            "options": {
+                "cwd": "{projectRoot}",
+                "commands": [
+                    "pnpm exec openapi-ts"
+                ],
+                "parallel": false
+            },
+            "dependsOn": [
+                {
+                    "projects": [
+                        "webhook_router"
+                    ],
+                    "target": "generate-openapi"
+                }
+            ],
+            "cache": false
+        }
+    }
+}

@@ -17,5 +17,9 @@
   },
   "dependencies": {
     "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@hey-api/openapi-ts": "^0.89.2",
+    "@tanstack/react-query": "^5.90.13"
   }
 }
