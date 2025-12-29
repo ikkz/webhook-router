@@ -1,16 +1,15 @@
 
 import { Link } from '@tanstack/react-router';
-import { Home, Activity, Radio } from 'lucide-react';
+import { Activity, Radio } from 'lucide-react';
 
 export function Sidebar() {
     const navItems = [
-        { to: '/', label: 'Overview', icon: Home },
         { to: '/endpoints', label: 'Endpoints', icon: Radio },
         { to: '/events', label: 'Events', icon: Activity },
     ];
 
     return (
-        <aside className="w-64 border-r bg-card min-h-screen">
+        <aside className="w-64 border-r bg-card h-full flex flex-col">
             <div className="p-4 font-bold text-xl border-b flex items-center gap-2">
                 <Activity className="w-6 h-6 text-primary" />
                 Webhook Router

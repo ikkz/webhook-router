@@ -32,13 +32,8 @@ const protectedRoute = createRoute({
 export const indexRoute = createRoute({
     getParentRoute: () => protectedRoute,
     path: '/',
-    component: function Index() {
-        return (
-            <div className="p-4">
-                <h3 className="text-2xl font-bold mb-4">Welcome to Webhook Router Console</h3>
-                <p className="text-muted-foreground">Manage your endpoints, targets, and view events using the sidebar.</p>
-            </div>
-        );
+    beforeLoad: () => {
+        throw redirect({ to: '/endpoints' });
     },
 });
 

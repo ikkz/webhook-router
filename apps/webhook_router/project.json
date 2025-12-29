@@ -88,8 +88,7 @@
         "target-dir": "dist/target/webhook_router",
         "args": [
           "--username=admin",
-          "--password=admin",
-          "--db-path=:memory:"
+          "--password=admin"
         ]
       },
       "configurations": {

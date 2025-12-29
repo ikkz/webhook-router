@@ -152,21 +152,25 @@ pub async fn ingress(
         event.id = Uuid::new_v4().to_string();
     }
 
-    // Concatenate banner + markdown + footer
+    // Concatenate banner + markdown + footer with proper formatting
     let mut final_markdown = String::new();
+    
     if let Some(banner) = &endpoint.banner {
         if !banner.is_empty() {
-            final_markdown.push_str(banner);
+            final_markdown.push_str(banner.trim());
             final_markdown.push_str("\n\n");
         }
     }
-    final_markdown.push_str(&event.markdown);
+    
+    final_markdown.push_str(event.markdown.trim());
+    
     if let Some(footer) = &endpoint.footer {
         if !footer.is_empty() {
             final_markdown.push_str("\n\n");
-            final_markdown.push_str(footer);
+            final_markdown.push_str(footer.trim());
         }
     }
+    
     event.markdown = final_markdown;
 
     state
@@ -463,21 +467,25 @@ async fn test_send(
         meta: json!({}),
     };
 
-    // Apply banner/footer concatenation
+    // Apply banner/footer concatenation with proper formatting
     let mut final_markdown = String::new();
+    
     if let Some(banner) = &endpoint.banner {
         if !banner.is_empty() {
-            final_markdown.push_str(banner);
+            final_markdown.push_str(banner.trim());
             final_markdown.push_str("\n\n");
         }
     }
-    final_markdown.push_str(&event.markdown);
+    
+    final_markdown.push_str(event.markdown.trim());
+    
     if let Some(footer) = &endpoint.footer {
         if !footer.is_empty() {
             final_markdown.push_str("\n\n");
-            final_markdown.push_str(footer);
+            final_markdown.push_str(footer.trim());
         }
     }
+    
     event.markdown = final_markdown;
 
     // Fetch targets and dispatch

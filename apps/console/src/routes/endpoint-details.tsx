@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { EditorView, basicSetup } from 'codemirror';
 import { markdown } from '@codemirror/lang-markdown';
 
@@ -75,60 +76,73 @@ export function EndpointDetailsPage() {
             </div>
 
             <div className="border-t pt-6 space-y-6">
-                <ConfigurationSection endpoint={endpoint} endpointId={endpointId} />
-                <TestSendSection endpointId={endpointId} />
-                <WebhookUrls endpointId={endpoint.id} />
+                <Tabs defaultValue="targets" className="w-full">
+                    <TabsList>
+                        <TabsTrigger value="targets">Targets</TabsTrigger>
+                        <TabsTrigger value="config">Configuration</TabsTrigger>
+                    </TabsList>
 
-                <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xl font-semibold tracking-tight">Targets</h3>
-                    <Button onClick={() => setIsCreating(true)}>
-                        <Plus className="w-4 h-4" />
-                        Add Target
-                    </Button>
-                </div>
+                    <TabsContent value="targets" className="mt-6 space-y-6">
+                        <WebhookUrls endpointId={endpoint.id} />
 
-                {isCreating && (
-                    <CreateTargetForm
-                        onSubmit={(data) => createMutation.mutate(data)}
-                        onCancel={() => setIsCreating(false)}
-                        isLoading={createMutation.isPending}
-                    />
-                )}
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-xl font-semibold tracking-tight">Targets</h3>
+                            <Button onClick={() => setIsCreating(true)}>
+                                <Plus className="w-4 h-4" />
+                                Add Target
+                            </Button>
+                        </div>
 
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {targets?.map((target) => (
-                        <Card key={target.id}>
-                            <CardHeader>
-                                <div className="flex justify-between items-start">
-                                    <CardTitle className="flex items-center gap-2">
-                                        {target.kind === 'slack' ? <MessageSquare className="w-4 h-4" /> : <Globe className="w-4 h-4" />}
-                                        {target.name}
-                                    </CardTitle>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon-sm"
-                                        onClick={() => {
-                                            if (window.confirm('Are you sure you want to delete this target?')) {
-                                                deleteMutation.mutate(target.id);
-                                            }
-                                        }}
-                                        className="text-destructive hover:bg-destructive/10"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </Button>
+                        {isCreating && (
+                            <CreateTargetForm
+                                onSubmit={(data) => createMutation.mutate(data)}
+                                onCancel={() => setIsCreating(false)}
+                                isLoading={createMutation.isPending}
+                            />
+                        )}
+
+                        <div className="border rounded-lg">
+                            {targets && targets.length > 0 ? (
+                                <div className="divide-y">
+                                    {targets.map((target) => (
+                                        <div key={target.id} className="p-4 hover:bg-muted/50 transition-colors">
+                                            <div className="flex items-start justify-between gap-4">
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        {target.kind === 'slack' ? <MessageSquare className="w-4 h-4" /> : <Globe className="w-4 h-4" />}
+                                                        <span className="font-medium">{target.name}</span>
+                                                        <span className="text-xs text-muted-foreground px-2 py-1 bg-muted rounded">{target.kind}</span>
+                                                    </div>
+                                                    <div className="text-sm text-muted-foreground break-all">{target.url}</div>
+                                                    <div className="text-xs text-muted-foreground mt-1">Created: {new Date(target.created_at * 1000).toLocaleString()}</div>
+                                                </div>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon-sm"
+                                                    onClick={() => {
+                                                        if (window.confirm('Are you sure you want to delete this target?')) {
+                                                            deleteMutation.mutate(target.id);
+                                                        }
+                                                    }}
+                                                    className="text-destructive hover:bg-destructive/10 flex-shrink-0"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
-                                <CardDescription className="truncate" title={target.url}>{target.url}</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-xs text-muted-foreground">Kind: {target.kind}</div>
-                                <div className="text-xs text-muted-foreground mt-1">Created: {new Date(target.created_at * 1000).toLocaleString()}</div>
-                            </CardContent>
-                        </Card>
-                    ))}
-                    {targets?.length === 0 && (
-                        <p className="col-span-full text-center text-muted-foreground py-10 border rounded-lg border-dashed">No targets configured for this endpoint.</p>
-                    )}
-                </div>
+                            ) : (
+                                <p className="text-center text-muted-foreground py-10">No targets configured for this endpoint.</p>
+                            )}
+                        </div>
+                    </TabsContent>
+
+                    <TabsContent value="config" className="mt-6 space-y-6">
+                        <ConfigurationSection endpoint={endpoint} endpointId={endpointId} />
+                        <TestSendSection endpointId={endpointId} targets={targets || []} />
+                    </TabsContent>
+                </Tabs>
             </div>
         </div>
     );
@@ -384,7 +398,7 @@ function ConfigurationSection({ endpoint, endpointId }: { endpoint: any, endpoin
     );
 }
 
-function TestSendSection({ endpointId }: { endpointId: string }) {
+function TestSendSection({ endpointId, targets }: { endpointId: string, targets: any[] }) {
     const [testMarkdown, setTestMarkdown] = useState('# Test Message\n\nThis is a test message to verify your endpoint configuration.');
     const [deliveryResults, setDeliveryResults] = useState<any>(null);
 
@@ -466,18 +480,22 @@ function TestSendSection({ endpointId }: { endpointId: string }) {
                         <h4 className="font-semibold mb-2">Delivery Results:</h4>
                         <p className="text-sm text-muted-foreground mb-2">Event ID: {deliveryResults.event_id}</p>
                         <div className="space-y-2">
-                            {deliveryResults.deliveries?.map((delivery: any, idx: number) => (
-                                <div key={idx} className="flex items-center gap-2 text-sm">
-                                    {delivery.status === 'sent' ? (
-                                        <CheckCircle2 className="w-4 h-4 text-green-500" />
-                                    ) : (
-                                        <XCircle className="w-4 h-4 text-red-500" />
-                                    )}
-                                    <span>Target {delivery.target_id}: {delivery.status}</span>
-                                    {delivery.response_code && <span className="text-muted-foreground">({delivery.response_code})</span>}
-                                    {delivery.error && <span className="text-destructive">- {delivery.error}</span>}
-                                </div>
-                            ))}
+                            {deliveryResults.deliveries?.map((delivery: any, idx: number) => {
+                                const target = targets.find(t => t.id === delivery.target_id);
+                                const targetName = target ? target.name : delivery.target_id;
+                                return (
+                                    <div key={idx} className="flex items-center gap-2 text-sm">
+                                        {delivery.status === 'sent' ? (
+                                            <CheckCircle2 className="w-4 h-4 text-green-500" />
+                                        ) : (
+                                            <XCircle className="w-4 h-4 text-red-500" />
+                                        )}
+                                        <span>Target {targetName}: {delivery.status}</span>
+                                        {delivery.response_code && <span className="text-muted-foreground">({delivery.response_code})</span>}
+                                        {delivery.error && <span className="text-destructive">- {delivery.error}</span>}
+                                    </div>
+                                );
+                            })}
                             {(!deliveryResults.deliveries || deliveryResults.deliveries.length === 0) && (
                                 <p className="text-sm text-muted-foreground">No targets configured for this endpoint</p>
                             )}
