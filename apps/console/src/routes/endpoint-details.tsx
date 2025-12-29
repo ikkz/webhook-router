@@ -418,14 +418,20 @@ function TestSendSection({ endpointId }: { endpointId: string }) {
 
     const testSendMutation = useMutation({
         mutationFn: async (markdown: string) => {
+            console.log('Sending test with markdown:', markdown, 'to endpoint:', endpointId);
             const res = await testSend({
                 path: { id: endpointId },
                 body: { markdown },
             });
+            console.log('Test send response:', res);
             return res.data;
         },
         onSuccess: (data) => {
+            console.log('Test send successful:', data);
             setDeliveryResults(data);
+        },
+        onError: (error) => {
+            console.error('Test send mutation error:', error);
         },
     });
 
@@ -481,7 +487,12 @@ function TestSendSection({ endpointId }: { endpointId: string }) {
 
                 {testSendMutation.isError && (
                     <div className="mt-4 p-4 border border-destructive rounded bg-destructive/10">
-                        <p className="text-sm text-destructive">Failed to send test message</p>
+                        <p className="text-sm text-destructive font-semibold">Failed to send test message</p>
+                        {testSendMutation.error && (
+                            <p className="text-xs text-destructive mt-1">
+                                {testSendMutation.error instanceof Error ? testSendMutation.error.message : String(testSendMutation.error)}
+                            </p>
+                        )}
                     </div>
                 )}
             </CardContent>

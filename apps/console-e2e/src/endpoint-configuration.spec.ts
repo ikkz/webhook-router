@@ -49,13 +49,13 @@ test.describe('Endpoint Configuration', () => {
         await expect(page.locator('.cm-content').nth(1)).toContainText('This is the footer');
     });
 
-    test('should send test message with banner/footer', async ({ page, request, context }) => {
+    test('should send test message with banner/footer via UI', async ({ page, request, context }) => {
         const mockServer = new MockTargetServer();
         await mockServer.start();
 
         try {
-            // Create endpoint via API
-            const endpointName = generateTestName('Test Send');
+            // Create endpoint via API with banner and footer
+            const endpointName = generateTestName('Test Send UI');
             const baseUrl = process.env.BASE_URL || 'http://localhost:3100';
             const authHeader = `Basic ${Buffer.from('admin:admin').toString('base64')}`;
 
@@ -80,30 +80,85 @@ test.describe('Endpoint Configuration', () => {
                 headers: { Authorization: authHeader },
             });
 
-            // Call test send API directly instead of via UI (more reliable for testing core functionality)
-            const testSendRes = await request.post(`${baseUrl}/console/api/endpoints/${endpoint.id}/test`, {
-                data: {
-                    markdown: '# Test Content\nHello World'
-                },
-                headers: { Authorization: authHeader },
-            });
+            // NOW TEST THE UI - Navigate to endpoint details page
+            await page.goto(`/console#/endpoints/${endpoint.id}`);
+            await page.waitForSelector('text=Test Send', { timeout: 10000 });
 
-            // Verify API returned success
-            expect(testSendRes.status()).toBe(200);
-            const result = await testSendRes.json();
-            expect(result.event_id).toBeTruthy();
+            // Wait for页面加载和 CodeMirror 编辑器初始化
+            await page.waitForTimeout(1500);
 
-            // Verify mock server received the request with banner/footer
-            await page.waitForTimeout(1500); // Give webhook time to arrive
-            const receivedPayloads = mockServer.getReceivedWebhooks();
-            expect(receivedPayloads.length).toBeGreaterThan(0);
+            // Find the test markdown editor (3rd CodeMirror editor)
+            const testEditorCount = await page.locator('.cm-editor').count();
+            console.log(`Found ${testEditorCount} CodeMirror editors`);
+            expect(testEditorCount).toBeGreaterThanOrEqual(3);
 
-            // The payload should contain the concatenated markdown
-            const lastPayload = receivedPayloads[receivedPayloads.length - 1].body;
-            const textField = lastPayload.text || lastPayload.content || JSON.stringify(lastPayload);
-            expect(textField).toContain('[BANNER]');
-            expect(textField).toContain('Test Content');
-            expect(textField).toContain('[FOOTER]');
+            const testEditor = page.locator('.cm-editor').nth(2);
+            await testEditor.waitFor({ state: 'visible', timeout: 5000 });
+
+            // Clear the default content and type new test markdown
+            await testEditor.click();
+            await page.waitForTimeout(300);
+
+            // Select all
+            await page.keyboard.press('Control+A');
+            await page.keyboard.press('Meta+A');
+            await page.waitForTimeout(200);
+
+            // Type test content
+            await page.keyboard.type('# UI Test Content');
+            await page.keyboard.press('Enter');
+            await page.keyboard.type('Testing from UI!');
+            await page.waitForTimeout(300);
+
+            // Find and click the "Send Test" button
+            const sendTestButton = page.locator('button:has-text("Send Test")').first();
+            await sendTestButton.waitFor({ state: 'visible', timeout: 5000 });
+
+            console.log('About to click Send Test button');
+            await sendTestButton.click();
+
+            // Wait for either success or error
+            await page.waitForTimeout(2000);
+
+            // Check if delivery results appeared
+            const deliveryResultsVisible = await page.locator('text=Delivery Results:')
+                .isVisible({ timeout: 15000 })
+                .catch(() => false);
+
+            if (deliveryResultsVisible) {
+                console.log('Delivery results appeared!');
+                await expect(page.locator('text=Delivery Results:')).toBeVisible();
+
+                // Verify mock server received the webhook
+                await page.waitForTimeout(1500);
+                const receivedPayloads = mockServer.getReceivedWebhooks();
+                console.log(`Mock server received ${receivedPayloads.length} payloads`);
+                expect(receivedPayloads.length).toBeGreaterThan(0);
+
+                // Verify content has banner, message, and footer
+                const lastPayload = receivedPayloads[receivedPayloads.length - 1].body;
+                const textField = lastPayload.text || lastPayload.content || JSON.stringify(lastPayload);
+                console.log('Received payload text:', textField);
+
+                expect(textField).toContain('[BANNER]');
+                expect(textField).toContain('UI Test Content');
+                expect(textField).toContain('[FOOTER]');
+            } else {
+                // Check if there's an error message
+                const errorVisible = await page.locator('text=Failed to send').isVisible().catch(() => false);
+                if (errorVisible) {
+                    const errorText = await page.locator('.text-destructive').allTextContents();
+                    console.error('Test send failed with error:', errorText);
+
+                    // Take a screenshot for debugging
+                    await page.screenshot({ path: 'test-output/test-send-error.png' });
+
+                    throw new Error(`Test send failed in UI: ${errorText.join(', ')}`);
+                } else {
+                    await page.screenshot({ path: 'test-output/no-results.png' });
+                    throw new Error('Neither delivery results nor error message appeared');
+                }
+            }
         } finally {
             await mockServer.stop();
         }
@@ -201,8 +256,8 @@ test.describe('Endpoint Configuration', () => {
         // Should show delivery results with no targets message
         const deliverySection = page.locator('text=Delivery Results:');
         if (await deliverySection.isVisible({ timeout: 2000 }).catch(() => false)) {
-            await expect(page.locator('text=No targets configured')).toBeVisible();
-        } else {
+            const noTargetsMsg = page.locator("text=No targets configured").first();
+            await expect(noTargetsMsg).toBeVisible();
             // Results appeared, verify response
             console.log('Delivery results appeared - test passed');
         }
