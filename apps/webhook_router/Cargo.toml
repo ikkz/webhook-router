@@ -21,6 +21,8 @@ markdown = "1.0.0"
 utoipa = { version = "5", features = ["axum_extras"] }
 utoipa-swagger-ui = { version = "8", features = ["axum"] }
 pulldown-cmark = "0.13.0"
+dprint-plugin-markdown = "0.20.0"
+anyhow = "1.0.100"
 
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

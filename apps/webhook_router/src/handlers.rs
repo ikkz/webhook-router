@@ -14,6 +14,7 @@ use crate::models::{
     BasicAuth, CreateEndpointRequest, CreateTargetRequest, DeliveryOutcome, Endpoint, EventRecord,
     Target, TestSendRequest, UpdateEndpointRequest, UemEvent,
 };
+use crate::utils::format::format_markdown;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -171,7 +172,9 @@ pub async fn ingress(
         }
     }
     
-    event.markdown = final_markdown;
+    // Format the concatenated markdown for proper spacing
+    event.markdown = format_markdown(&final_markdown)
+        .unwrap_or_else(|_| final_markdown);
 
     state
         .db
@@ -486,7 +489,9 @@ async fn test_send(
         }
     }
     
-    event.markdown = final_markdown;
+    // Format the concatenated markdown for proper spacing
+    event.markdown = format_markdown(&final_markdown)
+        .unwrap_or_else(|_| final_markdown);
 
     // Fetch targets and dispatch
     let targets = state.db.list_targets(&endpoint_id).await.map_err(AppError::from)?;
