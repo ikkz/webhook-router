@@ -19,7 +19,8 @@ This repo uses Codex-style coding agents. Keep instructions short, concrete, and
 ## Testing
 
 - Prefer unit tests near the code (module `#[cfg(test)]`).
-- Run: `cargo test -p webhook_router`.
+- Run backend tests: `nx test webhook_router`.
+- Run e2e tests: `nx e2e console-e2e --outputStyle=static`.
 
 ## Docs
 
@@ -28,7 +29,7 @@ This repo uses Codex-style coding agents. Keep instructions short, concrete, and
 
 ## Client Generation
 
-- To generate the API client: `nx run @webhook-router/api-client:generate`
+- To generate the API client: `nx run api-client:generate`
 
 <!-- nx configuration start-->
 <!-- Leave the start & end comments to automatically receive updates. -->

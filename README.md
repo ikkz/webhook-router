@@ -1,11 +1,24 @@
 # Webhook Router
 
-Webhook Router normalizes incoming webhook payloads into Markdown and forwards them to one or more downstream targets. It includes a lightweight console UI and a basic API for managing endpoints and targets.
+A universal webhook adapter that normalizes incoming webhook payloads into Markdown and forwards them to multiple downstream targets with platform-specific formatting.
 
-## What it does
-- Accepts incoming webhooks and normalizes content to Markdown.
-- Forwards events to multiple targets and records delivery results.
-- Provides a console UI under `/console` and a Basic Auth protected API under `/console/api`.
+## Background
+
+Many monitoring and alerting tools (like GlitchTip, Sentry, etc.) only support a limited set of webhook targets such as Slack and Discord. However, teams often use different communication platforms (DingTalk, Lark, WeCom, etc.) that aren't on the supported list. This creates a gap when you need to receive alerts in your team's preferred tool.
+
+Webhook Router solves this problem by acting as a universal adapter that:
+- **Accepts webhooks from multiple platforms** (ingress compatibility) - supports various webhook formats including Slack, DingTalk, Lark, WeCom, and custom HTTP webhooks
+- **Forwards to multiple platforms** (egress compatibility) - converts and delivers messages to any supported target platform
+- **Normalizes content to Markdown** - provides a unified intermediate format for easy transformation
+- **Manages multiple targets** - send one webhook to many destinations simultaneously
+
+## Features
+
+- Accepts incoming webhooks and normalizes content to Markdown
+- Forwards events to multiple targets with platform-specific formatting
+- Records delivery results for each target
+- Provides a console UI under `/console` and a Basic Auth protected API under `/console/api`
+- Supports custom banner/footer for message customization
 
 ## Docker
 The container expects configuration through environment variables.
@@ -87,19 +100,25 @@ pnpm install
 Run the backend (builds the console as a dependency):
 
 ```bash
-pnpm exec nx run webhook_router:run:debug
+nx run webhook_router:run:debug
 ```
 
 Run tests:
 
 ```bash
-pnpm exec nx run webhook_router:test
+nx test webhook_router
+```
+
+Run e2e tests:
+
+```bash
+nx e2e console-e2e --outputStyle=static
 ```
 
 Generate OpenAPI + API client:
 
 ```bash
-pnpm exec nx run @webhook-router/api-client:generate
+nx run api-client:generate
 ```
 
 ## Docs

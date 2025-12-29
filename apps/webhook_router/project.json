@@ -104,5 +104,8 @@
       }
     }
   },
-  "tags": []
+  "tags": [],
+  "implicitDependencies": [
+    "console"
+  ]
 }

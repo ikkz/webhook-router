@@ -14,7 +14,10 @@
           }
         ]
       }
-    }
+    },
+    "implicitDependencies": [
+      "webhook_router"
+    ]
   },
   "dependencies": {
     "express": "^5.2.1"
