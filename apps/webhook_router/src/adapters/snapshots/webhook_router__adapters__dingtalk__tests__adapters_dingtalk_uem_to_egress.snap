@@ -1,0 +1,10 @@
+---
+source: apps/webhook_router/src/adapters/dingtalk.rs
+expression: "json!({ \"content_type\": payload.content_type, \"body\": payload.body, })"
+---
+body:
+  markdown:
+    text: hello
+    title: Webhook Router
+  msgtype: markdown
+content_type: application/json

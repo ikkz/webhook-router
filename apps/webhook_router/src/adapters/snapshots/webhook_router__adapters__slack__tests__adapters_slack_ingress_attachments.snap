@@ -1,0 +1,40 @@
+---
+source: apps/webhook_router/src/adapters/slack.rs
+expression: "json!({\n    \"id\": event.id, \"source\": event.source, \"timestamp\": event.timestamp,\n    \"title\": event.title, \"markdown\": event.markdown, \"meta\": event.meta,\n    \"raw\": event.raw,\n})"
+---
+id: evt-attach-1
+markdown: "GlitchTip Alert\n\n[Error: test](https://example.com)\n\n- **Project**: platform-fe\n- **Environment**: production\n- **Release**: platform-fe@production-1add165\n\n**Error: test**\n[View Issue PLATFORM-FE-17](https://example.com)"
+meta:
+  channel: ~
+  thread_ts: ~
+  type: ~
+  user: ~
+raw:
+  alias: GlitchTip
+  attachments:
+    - color: "#e52b50"
+      fields:
+        - short: true
+          title: Project
+          value: platform-fe
+        - short: true
+          title: Environment
+          value: production
+        - short: false
+          title: Release
+          value: platform-fe@production-1add165
+      image_url: ~
+      mrkdown_in:
+        - text
+      text: ~
+      title: "Error: test"
+      title_link: "https://example.com"
+  event_id: evt-attach-1
+  event_time: 1700000000
+  sections:
+    - activitySubtitle: "[View Issue PLATFORM-FE-17](https://example.com)"
+      activityTitle: "Error: test"
+  text: GlitchTip Alert
+source: slack
+timestamp: 1700000000
+title: ~

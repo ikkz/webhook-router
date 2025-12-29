@@ -1,0 +1,21 @@
+---
+source: apps/webhook_router/src/adapters/dingtalk.rs
+expression: "json!({\n    \"id\": event.id, \"source\": event.source, \"timestamp\": event.timestamp,\n    \"title\": event.title, \"markdown\": event.markdown, \"meta\": event.meta,\n    \"raw\": event.raw,\n})"
+---
+id: ding-action-1
+markdown: "## 整体跳转actionCard消息\n\n![这是一张图片](https://img.alicdn.com/tfs/TB1NwmBEL9TBuNjy1zbXXXpepXa-2400-1218.png) \n  这是一个整体跳转actionCard消息\n\n[阅读全文](https://open.dingtalk.com/document/)"
+meta:
+  at: ~
+  msgtype: actionCard
+raw:
+  actionCard:
+    singleTitle: 阅读全文
+    singleURL: "https://open.dingtalk.com/document/"
+    text: "![这是一张图片](https://img.alicdn.com/tfs/TB1NwmBEL9TBuNjy1zbXXXpepXa-2400-1218.png) \n  这是一个整体跳转actionCard消息"
+    title: 整体跳转actionCard消息
+  createAt: 1700000000000
+  msgId: ding-action-1
+  msgtype: actionCard
+source: dingtalk
+timestamp: 1700000000
+title: 整体跳转actionCard消息

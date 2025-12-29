@@ -1,0 +1,19 @@
+---
+source: apps/webhook_router/src/adapters/dingtalk.rs
+expression: "json!({\n    \"id\": event.id, \"source\": event.source, \"timestamp\": event.timestamp,\n    \"title\": event.title, \"markdown\": event.markdown, \"meta\": event.meta,\n    \"raw\": event.raw,\n})"
+---
+id: ding-1
+markdown: hi
+meta:
+  at: ~
+  msgtype: markdown
+raw:
+  createAt: 1700000000000
+  markdown:
+    text: hi
+    title: notice
+  msgId: ding-1
+  msgtype: markdown
+source: dingtalk
+timestamp: 1700000000
+title: notice

@@ -1,0 +1,21 @@
+---
+source: apps/webhook_router/src/adapters/dingtalk.rs
+expression: "json!({\n    \"id\": event.id, \"source\": event.source, \"timestamp\": event.timestamp,\n    \"title\": event.title, \"markdown\": event.markdown, \"meta\": event.meta,\n    \"raw\": event.raw,\n})"
+---
+id: ding-feed-1
+markdown: "- [这是feedcard消息1](https://open.dingtalk.com/document/)\n  ![image](https://img.alicdn.com/tfs/TB1NwmBEL9TBuNjy1zbXXXpepXa-2400-1218.png)"
+meta:
+  at: ~
+  msgtype: feedCard
+raw:
+  createAt: 1700000000000
+  feedCard:
+    links:
+      - messageURL: "https://open.dingtalk.com/document/"
+        picURL: "https://img.alicdn.com/tfs/TB1NwmBEL9TBuNjy1zbXXXpepXa-2400-1218.png"
+        title: 这是feedcard消息1
+  msgId: ding-feed-1
+  msgtype: feedCard
+source: dingtalk
+timestamp: 1700000000
+title: 这是feedcard消息1

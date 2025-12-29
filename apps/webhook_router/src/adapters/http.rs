@@ -73,6 +73,7 @@ fn value_to_i64(value: &Value) -> Option<i64> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use insta::assert_yaml_snapshot;
     use serde_json::json;
 
     #[test]
@@ -80,8 +81,18 @@ mod tests {
         let adapter = HttpAdapter;
         let payload = json!({ "id": "evt-1", "markdown": "hello", "timestamp": 123 });
         let event = adapter.ingress_to_uem(&payload).expect("uem");
-        assert_eq!(event.id, "evt-1");
-        assert_eq!(event.markdown, "hello");
+        assert_yaml_snapshot!(
+            "adapters_http_ingress",
+            json!({
+                "id": event.id,
+                "source": event.source,
+                "timestamp": event.timestamp,
+                "title": event.title,
+                "markdown": event.markdown,
+                "meta": event.meta,
+                "raw": event.raw,
+            })
+        );
     }
 
     #[test]
@@ -97,6 +108,12 @@ mod tests {
             meta: json!({}),
         };
         let payload = adapter.uem_to_egress(&event).expect("payload");
-        assert_eq!(payload.body["markdown"], "hello");
+        assert_yaml_snapshot!(
+            "adapters_http_uem_to_egress",
+            json!({
+                "content_type": payload.content_type,
+                "body": payload.body,
+            })
+        );
     }
 }

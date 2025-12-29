@@ -1,0 +1,21 @@
+---
+source: apps/webhook_router/src/adapters/slack.rs
+expression: "json!({\n    \"id\": event.id, \"source\": event.source, \"timestamp\": event.timestamp,\n    \"title\": event.title, \"markdown\": event.markdown, \"meta\": event.meta,\n    \"raw\": event.raw,\n})"
+---
+id: evt-123
+markdown: hello
+meta:
+  channel: C1
+  thread_ts: ~
+  type: message
+  user: ~
+raw:
+  event:
+    channel: C1
+    text: hello
+    type: message
+  event_id: evt-123
+  event_time: 1700000000
+source: slack
+timestamp: 1700000000
+title: message

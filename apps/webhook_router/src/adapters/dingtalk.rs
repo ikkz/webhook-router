@@ -238,6 +238,7 @@ fn value_to_i64(value: &Value) -> Option<i64> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use insta::assert_yaml_snapshot;
     use serde_json::json;
 
     #[test]
@@ -250,29 +251,51 @@ mod tests {
             "markdown": { "title": "notice", "text": "hi" }
         });
         let event = adapter.ingress_to_uem(&payload).expect("uem");
-        assert_eq!(event.id, "ding-1");
-        assert_eq!(event.source, "dingtalk");
-        assert_eq!(event.markdown, "hi");
-        assert_eq!(event.title.as_deref(), Some("notice"));
+        assert_yaml_snapshot!(
+            "adapters_dingtalk_ingress_markdown",
+            json!({
+                "id": event.id,
+                "source": event.source,
+                "timestamp": event.timestamp,
+                "title": event.title,
+                "markdown": event.markdown,
+                "meta": event.meta,
+                "raw": event.raw,
+            })
+        );
     }
 
     #[test]
     fn dingtalk_ingress_text() {
         let adapter = DingTalkAdapter;
         let payload = json!({
+            "msgId": "ding-text-1",
+            "createAt": 1700000000000_i64,
             "msgtype": "text",
             "text": { "content": "我就是我, @180xxxxxx 是不一样的烟火" },
             "at": { "atMobiles": ["180xxxxxx"], "isAtAll": false }
         });
         let event = adapter.ingress_to_uem(&payload).expect("uem");
-        assert!(event.markdown.contains("我就是我"));
-        assert_eq!(event.title.as_deref(), Some("text"));
+        assert_yaml_snapshot!(
+            "adapters_dingtalk_ingress_text",
+            json!({
+                "id": event.id,
+                "source": event.source,
+                "timestamp": event.timestamp,
+                "title": event.title,
+                "markdown": event.markdown,
+                "meta": event.meta,
+                "raw": event.raw,
+            })
+        );
     }
 
     #[test]
     fn dingtalk_ingress_link() {
         let adapter = DingTalkAdapter;
         let payload = json!({
+            "msgId": "ding-link-1",
+            "createAt": 1700000000000_i64,
             "msgtype": "link",
             "link": {
                 "text": "这是Link消息",
@@ -282,15 +305,26 @@ mod tests {
             }
         });
         let event = adapter.ingress_to_uem(&payload).expect("uem");
-        assert!(event.markdown.contains("这是Link消息"));
-        assert!(event.markdown.contains("https://open.dingtalk.com/document/"));
-        assert_eq!(event.title.as_deref(), Some("这是一个Link消息"));
+        assert_yaml_snapshot!(
+            "adapters_dingtalk_ingress_link",
+            json!({
+                "id": event.id,
+                "source": event.source,
+                "timestamp": event.timestamp,
+                "title": event.title,
+                "markdown": event.markdown,
+                "meta": event.meta,
+                "raw": event.raw,
+            })
+        );
     }
 
     #[test]
     fn dingtalk_ingress_action_card() {
         let adapter = DingTalkAdapter;
         let payload = json!({
+            "msgId": "ding-action-1",
+            "createAt": 1700000000000_i64,
             "msgtype": "actionCard",
             "actionCard": {
                 "title": "整体跳转actionCard消息",
@@ -300,15 +334,26 @@ mod tests {
             }
         });
         let event = adapter.ingress_to_uem(&payload).expect("uem");
-        assert!(event.markdown.contains("整体跳转actionCard消息"));
-        assert!(event.markdown.contains("阅读全文"));
-        assert_eq!(event.title.as_deref(), Some("整体跳转actionCard消息"));
+        assert_yaml_snapshot!(
+            "adapters_dingtalk_ingress_action_card",
+            json!({
+                "id": event.id,
+                "source": event.source,
+                "timestamp": event.timestamp,
+                "title": event.title,
+                "markdown": event.markdown,
+                "meta": event.meta,
+                "raw": event.raw,
+            })
+        );
     }
 
     #[test]
     fn dingtalk_ingress_feed_card() {
         let adapter = DingTalkAdapter;
         let payload = json!({
+            "msgId": "ding-feed-1",
+            "createAt": 1700000000000_i64,
             "msgtype": "feedCard",
             "feedCard": {
                 "links": [
@@ -321,9 +366,18 @@ mod tests {
             }
         });
         let event = adapter.ingress_to_uem(&payload).expect("uem");
-        assert!(event.markdown.contains("这是feedcard消息1"));
-        assert!(event.markdown.contains("https://open.dingtalk.com/document/"));
-        assert_eq!(event.title.as_deref(), Some("这是feedcard消息1"));
+        assert_yaml_snapshot!(
+            "adapters_dingtalk_ingress_feed_card",
+            json!({
+                "id": event.id,
+                "source": event.source,
+                "timestamp": event.timestamp,
+                "title": event.title,
+                "markdown": event.markdown,
+                "meta": event.meta,
+                "raw": event.raw,
+            })
+        );
     }
 
     #[test]
@@ -339,7 +393,12 @@ mod tests {
             meta: json!({}),
         };
         let payload = adapter.uem_to_egress(&event).expect("payload");
-        assert_eq!(payload.body["msgtype"], "markdown");
-        assert_eq!(payload.body["markdown"]["text"], "hello");
+        assert_yaml_snapshot!(
+            "adapters_dingtalk_uem_to_egress",
+            json!({
+                "content_type": payload.content_type,
+                "body": payload.body,
+            })
+        );
     }
 }

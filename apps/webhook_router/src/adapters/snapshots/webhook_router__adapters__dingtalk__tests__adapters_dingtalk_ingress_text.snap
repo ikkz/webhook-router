@@ -1,0 +1,25 @@
+---
+source: apps/webhook_router/src/adapters/dingtalk.rs
+expression: "json!({\n    \"id\": event.id, \"source\": event.source, \"timestamp\": event.timestamp,\n    \"title\": event.title, \"markdown\": event.markdown, \"meta\": event.meta,\n    \"raw\": event.raw,\n})"
+---
+id: ding-text-1
+markdown: "我就是我, @180xxxxxx 是不一样的烟火"
+meta:
+  at:
+    atMobiles:
+      - 180xxxxxx
+    isAtAll: false
+  msgtype: text
+raw:
+  at:
+    atMobiles:
+      - 180xxxxxx
+    isAtAll: false
+  createAt: 1700000000000
+  msgId: ding-text-1
+  msgtype: text
+  text:
+    content: "我就是我, @180xxxxxx 是不一样的烟火"
+source: dingtalk
+timestamp: 1700000000
+title: text

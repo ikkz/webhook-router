@@ -1,0 +1,9 @@
+---
+source: apps/webhook_router/src/adapters/wecom.rs
+expression: "json!({ \"content_type\": payload.content_type, \"body\": payload.body, })"
+---
+body:
+  markdown:
+    content: hello
+  msgtype: markdown
+content_type: application/json

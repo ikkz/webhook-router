@@ -1,0 +1,13 @@
+---
+source: apps/webhook_router/src/adapters/http.rs
+expression: "json!({ \"content_type\": payload.content_type, \"body\": payload.body, })"
+---
+body:
+  id: evt-1
+  markdown: hello
+  meta: {}
+  raw: {}
+  source: custom
+  timestamp: 1
+  title: ~
+content_type: application/json

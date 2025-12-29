@@ -1,0 +1,7 @@
+---
+source: apps/webhook_router/src/adapters/slack.rs
+expression: "json!({ \"content_type\": payload.content_type, \"body\": payload.body, })"
+---
+body:
+  text: "*bold*"
+content_type: application/json

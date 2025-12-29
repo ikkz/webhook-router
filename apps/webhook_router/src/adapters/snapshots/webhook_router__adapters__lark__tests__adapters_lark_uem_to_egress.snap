@@ -1,0 +1,14 @@
+---
+source: apps/webhook_router/src/adapters/lark.rs
+expression: "json!({ \"content_type\": payload.content_type, \"body\": payload.body, })"
+---
+body:
+  content:
+    post:
+      zh_cn:
+        content:
+          - - tag: text
+              text: hello
+        title: Notification
+  msg_type: post
+content_type: application/json

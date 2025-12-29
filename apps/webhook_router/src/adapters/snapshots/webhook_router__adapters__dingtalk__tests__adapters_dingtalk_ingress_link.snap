@@ -1,0 +1,21 @@
+---
+source: apps/webhook_router/src/adapters/dingtalk.rs
+expression: "json!({\n    \"id\": event.id, \"source\": event.source, \"timestamp\": event.timestamp,\n    \"title\": event.title, \"markdown\": event.markdown, \"meta\": event.meta,\n    \"raw\": event.raw,\n})"
+---
+id: ding-link-1
+markdown: "**这是一个Link消息**\n\n这是Link消息\n\n[这是一个Link消息](https://open.dingtalk.com/document/)\n\n![image](https://img.alicdn.com/tfs/TB1NwmBEL9TBuNjy1zbXXXpepXa-2400-1218.png)"
+meta:
+  at: ~
+  msgtype: link
+raw:
+  createAt: 1700000000000
+  link:
+    messageUrl: "https://open.dingtalk.com/document/"
+    picUrl: "https://img.alicdn.com/tfs/TB1NwmBEL9TBuNjy1zbXXXpepXa-2400-1218.png"
+    text: 这是Link消息
+    title: 这是一个Link消息
+  msgId: ding-link-1
+  msgtype: link
+source: dingtalk
+timestamp: 1700000000
+title: 这是一个Link消息

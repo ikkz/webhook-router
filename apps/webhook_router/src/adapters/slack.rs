@@ -336,6 +336,7 @@ fn value_to_i64(value: &Value) -> Option<i64> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use insta::assert_yaml_snapshot;
     use serde_json::json;
 
     #[test]
@@ -347,9 +348,18 @@ mod tests {
             "event": { "type": "message", "text": "hello", "channel": "C1" }
         });
         let event = adapter.ingress_to_uem(&payload).expect("uem");
-        assert_eq!(event.id, "evt-123");
-        assert_eq!(event.source, "slack");
-        assert_eq!(event.markdown, "hello");
+        assert_yaml_snapshot!(
+            "adapters_slack_ingress_basic",
+            json!({
+                "id": event.id,
+                "source": event.source,
+                "timestamp": event.timestamp,
+                "title": event.title,
+                "markdown": event.markdown,
+                "meta": event.meta,
+                "raw": event.raw,
+            })
+        );
     }
 
     #[test]
@@ -365,13 +375,21 @@ mod tests {
             meta: json!({}),
         };
         let payload = adapter.uem_to_egress(&event).expect("payload");
-        assert_eq!(payload.body["text"], "*bold*");
+        assert_yaml_snapshot!(
+            "adapters_slack_uem_to_egress",
+            json!({
+                "content_type": payload.content_type,
+                "body": payload.body,
+            })
+        );
     }
 
     #[test]
     fn slack_ingress_with_attachments() {
         let adapter = SlackAdapter;
         let payload = json!({
+            "event_id": "evt-attach-1",
+            "event_time": 1700000000,
             "alias": "GlitchTip",
             "attachments": [
                 {
@@ -397,10 +415,17 @@ mod tests {
             "text": "GlitchTip Alert"
         });
         let event = adapter.ingress_to_uem(&payload).expect("uem");
-        assert!(event.markdown.contains("GlitchTip Alert"));
-        assert!(event.markdown.contains("Error: test"));
-        assert!(event.markdown.contains("Project"));
-        assert!(event.markdown.contains("platform-fe"));
-        assert!(event.markdown.contains("View Issue"));
+        assert_yaml_snapshot!(
+            "adapters_slack_ingress_attachments",
+            json!({
+                "id": event.id,
+                "source": event.source,
+                "timestamp": event.timestamp,
+                "title": event.title,
+                "markdown": event.markdown,
+                "meta": event.meta,
+                "raw": event.raw,
+            })
+        );
     }
 }
