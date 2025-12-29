@@ -1,0 +1,9 @@
+.git
+.nx
+node_modules
+dist
+target
+apps/**/dist
+apps/**/target
+**/*.log
+**/*.rs.bk
