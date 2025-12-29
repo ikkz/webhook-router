@@ -116,3 +116,43 @@ If you're publishing text with emoji, you don't need to worry about converting t
 If you're retrieving messages, you'll receive the emojis in colon format, so you might want to convert them back to their unicode emoji form. The compatible emoji formats are the Unicode Unified format (used by OSX 10.7+ and iOS 6+), the Softbank format (used by iOS 5) and the Google format (used by some Android devices). These will be converted into their colon-format equivalents.
 
 The list of supported emoji are taken from https://github.com/iamcal/emoji-data.
+
+{
+  "alias": "GlitchTip",
+  "attachments": [
+    {
+      "color": "#e52b50",
+      "fields": [
+        {
+          "short": true,
+          "title": "Project",
+          "value": "platform-fe"
+        },
+        {
+          "short": true,
+          "title": "Environment",
+          "value": "production"
+        },
+        {
+          "short": false,
+          "title": "Release",
+          "value": "platform-fe@production-1add165"
+        }
+      ],
+      "image_url": null,
+      "mrkdown_in": [
+        "text"
+      ],
+      "text": null,
+      "title": "Error: test",
+      "title_link": "https://example.com"
+    }
+  ],
+  "sections": [
+    {
+      "activitySubtitle": "[View Issue PLATFORM-FE-17](https://example.com)",
+      "activityTitle": "Error: test"
+    }
+  ],
+  "text": "GlitchTip Alert"
+}

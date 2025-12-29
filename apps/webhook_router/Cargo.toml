@@ -28,5 +28,8 @@ pulldown-cmark = "0.13.0"
 dprint-plugin-markdown = "0.20.0"
 anyhow = "1.0.100"
 
+[dev-dependencies]
+insta = { version = "1.45.1", features = ["yaml"] }
+
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

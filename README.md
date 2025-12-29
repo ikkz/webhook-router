@@ -64,6 +64,15 @@ When configuring external platforms, use:
 - Console UI: `GET /console`
 - Console API (Basic Auth): `GET /console/api/...`
 
+## Platform compatibility
+| Platform | Ingress message types | Markdown normalization |
+| --- | --- | --- |
+| DingTalk | text, link, markdown, actionCard (single + buttons), feedCard | Best-effort Markdown from message fields |
+| Slack | text, blocks (section/header/divider/image/context/actions/rich_text), attachments, sections | Best-effort Markdown; mrkdwn preserved where possible |
+| Lark | text | Uses message content text |
+| WeCom | text, markdown, markdown_v2 | Uses content text |
+| Custom HTTP | markdown, text (fallback to raw JSON) | Uses provided markdown/text or raw JSON |
+
 ## Local development
 Install dependencies:
 

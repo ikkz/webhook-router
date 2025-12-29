@@ -1,3 +1,448 @@
+企业内部机器人支持的消息类型
+机器人群聊会话支持发送以下消息类型：
+
+Text文本类型
+
+Link链接消息类型
+
+Markdown类型
+
+ActionCard类型
+
+FeedCard类型
+
+场景一：发送Text文本消息类型
+数据格式
+{
+    "at": {
+        "atMobiles": [
+            "180xxxxxx"
+        ],
+        "atUserIds": [
+            "user123"
+        ],
+        "isAtAll": false
+    },
+    "text": {
+        "content": "我就是我, @180xxxxxx 是不一样的烟火"
+    },
+    "msgtype": "text"
+}
+
+参数
+
+是否必填
+
+类型
+
+说明
+
+msgtype
+
+是
+
+String
+
+text。
+
+content
+
+是
+
+String
+
+消息文本。
+
+atMobiles
+
+否
+
+Array
+
+被@人的手机号。
+
+说明
+消息内容content中要带上"@手机号"，跟atMobiles参数结合使用，才有@效果，如上示例。
+atUserIds
+
+否
+
+Array
+
+被@人的用户userid。
+
+说明
+消息内容content中要带上"@userId"，跟atUserIds参数结合使用，才有@效果。
+isAtAll
+
+否
+
+Boolean
+
+@所有人是true，否则为false。
+
+场景二：发送Link链接消息类型
+{
+    "msgtype": "link", 
+    "link": {
+        "text": "这是Link消息", 
+        "title": "这是一个Link消息", 
+        "picUrl": "https://img.alicdn.com/tfs/TB1NwmBEL9TBuNjy1zbXXXpepXa-2400-1218.png", 
+        "messageUrl": "https://open.dingtalk.com/document/"
+    }
+}
+参数
+
+参数类型
+
+是否必填
+
+说明
+
+msgtype
+
+String
+
+是
+
+消息类型，此时固定为：link。
+
+title
+
+String
+
+是
+
+消息标题。
+
+text
+
+String
+
+是
+
+消息内容。如果太长只会部分展示。
+
+messageUrl
+
+String
+
+是
+
+点击消息跳转的URL。
+
+移动端
+
+在钉钉客户端内打开。
+
+PC端
+
+默认外部浏览器打开。
+
+希望在侧边栏打开，请参考消息链接说明。
+
+picUrl
+
+String
+
+否
+
+图片URL。
+
+场景三：发送Markdown消息类型
+{
+     "msgtype": "markdown",
+     "markdown": {
+         "title":"杭州天气",
+         "text": "#### 杭州天气 @150XXXXXXXX \n> 9度，西北风1级，空气良89，相对温度73%\n> ![screenshot](https://img.alicdn.com/tfs/TB1NwmBEL9TBuNjy1zbXXXpepXa-2400-1218.png)\n> ###### 10点20分发布 [天气](https://www.dingalk.com) \n"
+     },
+      "at": {
+          "atMobiles": [
+              "150XXXXXXXX"
+          ],
+          "atUserIds": [
+              "user123"
+          ],
+          "isAtAll": false
+      }
+ }
+参数
+
+是否必填
+
+类型
+
+说明
+
+msgtype
+
+是
+
+String
+
+markdown。
+
+title
+
+是
+
+String
+
+首屏会话透出的展示内容。
+
+text
+
+是
+
+String
+
+markdown格式的消息内容。
+
+atMobiles
+
+否
+
+Array
+
+被@人的手机号。
+
+说明
+消息内容text内要带上"@手机号"，跟atMobiles参数结合使用，才有@效果，如上示例。
+atUserIds
+
+否
+
+Array
+
+被@人的用户userid。
+
+说明
+消息内容content中要带上"@userId"，跟atUserIds参数结合使用，才有@效果。
+isAtAll
+
+否
+
+Boolean
+
+@所有人是true，否则为false。
+
+场景四：发送actionCard消息类型
+整体跳转actionCard类型
+{
+    "msgtype": "actionCard",
+    "actionCard": {
+        "title": "整体跳转actionCard消息", 
+        "text": "![这是一张图片](https://img.alicdn.com/tfs/TB1NwmBEL9TBuNjy1zbXXXpepXa-2400-1218.png) \n  这是一个整体跳转actionCard消息",
+        "singleTitle" : "阅读全文",
+        "singleURL" : "https://open.dingtalk.com/document/"
+    }
+}
+{
+  "actionCard": {
+    "btnOrientation": "",
+    "btns": null,
+    "hideAvatar": "0",
+    "singleTitle": "view commit",
+    "singleURL": "",
+    "text": "[0000000](https://example.com) This is a fake commit - Ghost",
+    "title": "[test/test:main] 1 new commit"
+  },
+  "at": {
+    "atMobiles": null,
+    "isAtAll": false
+  },
+  "feedCard": {
+    "links": null
+  },
+  "link": {
+    "messageUrl": "",
+    "picUrl": "",
+    "text": "",
+    "title": ""
+  },
+  "markdown": {
+    "text": "",
+    "title": ""
+  },
+  "msgtype": "actionCard",
+  "text": {
+    "content": ""
+  }
+}
+
+独立跳转actionCard类型
+{
+    "msgtype": "actionCard",
+    "actionCard": {
+        "title": "独立跳转actionCard消息", 
+        "text": "![这是一张图片](https://img.alicdn.com/tfs/TB1NwmBEL9TBuNjy1zbXXXpepXa-2400-1218.png) \n  这是一个独立跳转actionCard消息", 
+        "btnOrientation": "1", 
+        "btns": [
+            {
+                "title": "查看摘要", 
+                "actionURL": "https://open.dingtalk.com/document/"
+            }, 
+            {
+                "title": "不感兴趣", 
+                "actionURL": "https://open.dingtalk.com/"
+            }
+        ]
+    }
+}
+参数
+
+是否必填
+
+类型
+
+说明
+
+msgtype
+
+是
+
+String
+
+actionCard。
+
+title
+
+是
+
+String
+
+首屏会话透出的展示内容。
+
+text
+
+是
+
+String
+
+markdown格式的消息内容。
+
+btns
+
+是
+
+Array
+
+按钮。
+
+title
+
+是
+
+String
+
+按钮标题。
+
+actionURL
+
+是
+
+String
+
+点击按钮触发的URL。
+
+移动端
+
+在钉钉客户端内打开。
+
+PC端
+
+默认侧边栏打开。
+
+希望在外部浏览器打开，请参考信息链接说明。
+
+btnOrientation
+
+否
+
+String
+
+按钮排列顺序。
+
+0：按钮竖直排列
+
+1：按钮横向排列
+
+
+场景五：发送feedCard消息类型
+{
+    "msgtype": "feedCard",
+    "feedCard": {
+        "links": [
+            {
+                "title": "这是feedcard消息1", 
+                "messageURL": "https://open.dingtalk.com/document/", 
+                "picURL": "https://img.alicdn.com/tfs/TB1NwmBEL9TBuNjy1zbXXXpepXa-2400-1218.png"
+            },
+            {
+                "title": "这是feedcard的消息2", 
+                "messageURL": "https://open.dingtalk.com/", 
+                "picURL": "https://img.alicdn.com/tfs/TB1NwmBEL9TBuNjy1zbXXXpepXa-2400-1218.png"
+            },
+            {
+                "title": "这是feedcard的消息3", 
+                "messageURL": "https://www.dingtalk.com/", 
+                "picURL": "https://img.alicdn.com/tfs/TB1NwmBEL9TBuNjy1zbXXXpepXa-2400-1218.png"
+            } 
+        ]
+    }
+}
+参数
+
+是否必填
+
+类型
+
+说明
+
+msgtype
+
+是
+
+String
+
+feedCard。
+
+title
+
+是
+
+String
+
+单条信息文本。
+
+messageURL
+
+是
+
+String
+
+单条信息跳转链接。
+
+移动端
+
+在钉钉客户端内打开。
+
+PC端
+
+默认侧边栏打开。
+
+希望在外部浏览器打开，请参考信息链接说明。
+
+picURL
+
+是
+
+String
+
+单条信息后面图片的URL。
+
+
+
 企业内部机器人实现群聊发送Markdown消息
 
 本示例介绍了企业内部机器人使用Webhook方式，实现发送Markdown消息。Markdown语法支持的类型有标题、引用、文字效果、链接、图片、无序列表和有序列表。
