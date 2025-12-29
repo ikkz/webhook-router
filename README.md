@@ -21,7 +21,7 @@ Webhook Router normalizes incoming webhook payloads into Markdown and forwards t
 All CLI flags are also available via environment variables (useful for Docker).
 
 - `--bind` / `WEBHOOK_ROUTER_BIND` (default: `0.0.0.0:3000`)
-- `--db-path` / `WEBHOOK_ROUTER_DB_PATH` (default: `webhook_router.db`)
+- `--db-path` / `WEBHOOK_ROUTER_DB_PATH` (default: `data/webhook_router.db`)
 - `--username` / `WEBHOOK_ROUTER_USERNAME` (required)
 - `--password` / `WEBHOOK_ROUTER_PASSWORD` (required)
 - `--swagger-ui` / `WEBHOOK_ROUTER_SWAGGER_UI`
@@ -61,8 +61,8 @@ Example:
 docker run --rm -p 3000:3000 \
   -e WEBHOOK_ROUTER_USERNAME=admin \
   -e WEBHOOK_ROUTER_PASSWORD=admin \
-  -e WEBHOOK_ROUTER_DB_PATH=/data/webhook_router.db \
   -e WEBHOOK_ROUTER_BIND=0.0.0.0:3000 \
+  -v /path/on/host:/app/data \
   webhook-router:latest
 ```
 

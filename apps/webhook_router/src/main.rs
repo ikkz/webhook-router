@@ -21,7 +21,7 @@ use models::BasicAuth;
 struct Args {
     #[arg(long, env = "WEBHOOK_ROUTER_BIND", default_value = "0.0.0.0:3000")]
     bind: String,
-    #[arg(long, env = "WEBHOOK_ROUTER_DB_PATH", default_value = "webhook_router.db")]
+    #[arg(long, env = "WEBHOOK_ROUTER_DB_PATH", default_value = "data/webhook_router.db")]
     db_path: String,
     #[arg(long, env = "WEBHOOK_ROUTER_USERNAME")]
     username: String,
