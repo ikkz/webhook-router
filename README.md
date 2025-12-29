@@ -7,15 +7,20 @@ Webhook Router normalizes incoming webhook payloads into Markdown and forwards t
 - Forwards events to multiple targets and records delivery results.
 - Provides a console UI under `/console` and a Basic Auth protected API under `/console/api`.
 
-## Repo layout
-- `apps/webhook_router`: Rust backend (Axum + SQLite)
-- `apps/console`: React console UI
-- `docs/`: design notes and adapter formats
+## Docker
+The container expects configuration through environment variables.
 
-## HTTP endpoints
-- Ingress: `POST /ingress/:endpoint_id/:platform`
-- Console UI: `GET /console`
-- Console API (Basic Auth): `GET /console/api/...`
+Example:
+
+```bash
+docker run --rm -p 3000:3000 \
+  -e WEBHOOK_ROUTER_USERNAME=your_username \
+  -e WEBHOOK_ROUTER_PASSWORD=your_password \
+  -v /path/on/host:/app/data \
+  ghcr.io/ikkz/webhook-router:latest
+```
+
+Docker Compose example: `examples/docker-compose.example.yml`
 
 ## Configuration
 All CLI flags are also available via environment variables (useful for Docker).
@@ -26,6 +31,38 @@ All CLI flags are also available via environment variables (useful for Docker).
 - `--password` / `WEBHOOK_ROUTER_PASSWORD` (required)
 - `--swagger-ui` / `WEBHOOK_ROUTER_SWAGGER_UI`
 - `--generate-openapi` / `WEBHOOK_ROUTER_GENERATE_OPENAPI`
+
+### Reverse proxy
+As long as you set a strong password, exposing the bind port directly to the public internet is safe enough. If you only want to expose specific webhook endpoints publicly, you can use a reverse proxy for path routing. Example Caddy config:
+
+```caddyfile
+https://example.com {
+        handle_path /webhooks/* {
+                rewrite * /ingress{path}
+                reverse_proxy localhost:3000
+        }
+
+        handle {
+                abort
+        }
+}
+```
+
+With this setup, the console shows an ingress URL like:
+`http://localhost:3000/ingress/5bc06725-97e9-4cc7-92f9-9258972687cb/lark`
+
+When configuring external platforms, use:
+`https://data.example.com/webhooks/5bc06725-97e9-4cc7-92f9-9258972687cb/lark`
+
+## Repo layout
+- `apps/webhook_router`: Rust backend (Axum + SQLite)
+- `apps/console`: React console UI
+- `docs/`: design notes and adapter formats
+
+## HTTP endpoints
+- Ingress: `POST /ingress/:endpoint_id/:platform`
+- Console UI: `GET /console`
+- Console API (Basic Auth): `GET /console/api/...`
 
 ## Local development
 Install dependencies:
@@ -50,20 +87,6 @@ Generate OpenAPI + API client:
 
 ```bash
 pnpm exec nx run @webhook-router/api-client:generate
-```
-
-## Docker
-The container expects configuration through environment variables.
-
-Example:
-
-```bash
-docker run --rm -p 3000:3000 \
-  -e WEBHOOK_ROUTER_USERNAME=admin \
-  -e WEBHOOK_ROUTER_PASSWORD=admin \
-  -e WEBHOOK_ROUTER_BIND=0.0.0.0:3000 \
-  -v /path/on/host:/app/data \
-  webhook-router:latest
 ```
 
 ## Docs

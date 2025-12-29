@@ -1,0 +1,13 @@
+version: "3.9"
+
+services:
+  webhook-router:
+    image: ghcr.io/ikkz/webhook-router:latest
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      WEBHOOK_ROUTER_USERNAME: your_username
+      WEBHOOK_ROUTER_PASSWORD: your_password
+    volumes:
+      - ./data:/app/data
