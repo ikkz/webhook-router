@@ -10,7 +10,7 @@
             "projects": [
               "webhook_router"
             ],
-            "target": "e2e-run"
+            "target": "run"
           }
         ]
       }

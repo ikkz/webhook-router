@@ -35,7 +35,7 @@ export default defineConfig({
   },
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'pnpm exec nx run webhook_router:e2e-run',
+    command: 'pnpm exec nx run webhook_router:run',
     url: baseURL,
     reuseExistingServer: true,
     cwd: workspaceRoot,
@@ -47,15 +47,18 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
 
-    // {
-    //   name: 'firefox',
-    //   use: { ...devices['Desktop Firefox'] },
-    // },
-
-    // {
-    //   name: 'webkit',
-    //   use: { ...devices['Desktop Safari'] },
-    // },
+    ...(process.env.CI
+      ? [
+        {
+          name: 'firefox',
+          use: { ...devices['Desktop Firefox'] },
+        },
+        {
+          name: 'webkit',
+          use: { ...devices['Desktop Safari'] },
+        },
+      ]
+      : []),
 
     // Uncomment for mobile browsers support
     /* {
@@ -76,5 +79,5 @@ export default defineConfig({
       name: 'Google Chrome',
       use: { ...devices['Desktop Chrome'], channel: 'chrome' },
     } */
-  ],
+  ].flat(),
 });

@@ -22,11 +22,19 @@
         "target-dir": "dist/target/webhook_router"
       },
       "configurations": {
+        "test": {
+          "features": [
+            "console"
+          ]
+        },
         "production": {
-          "release": true
+          "release": true,
+          "features": [
+            "console"
+          ]
         }
       },
-      "defaultConfiguration": "production"
+      "defaultConfiguration": "test"
     },
     "test": {
       "cache": true,
@@ -53,7 +61,7 @@
         "target-dir": "dist/target/webhook_router"
       }
     },
-    "e2e-run": {
+    "run": {
       "executor": "@monodon/rust:run",
       "continuous": true,
       "dependsOn": [
@@ -75,25 +83,16 @@
           "--password=admin",
           "--db-path=:memory:"
         ],
-        "release": true
-      }
-    },
-    "run": {
-      "executor": "@monodon/rust:run",
-      "continuous": true,
-      "outputs": [
-        "{options.target-dir}"
-      ],
-      "options": {
-        "target-dir": "dist/target/webhook_router",
-        "args": [
-          "--username=admin",
-          "--password=admin"
+        "features": [
+          "console"
         ]
       },
       "configurations": {
-        "production": {
-          "release": true
+        "debug": {
+          "args": [
+            "--username=admin",
+            "--password=admin"
+          ]
         }
       }
     },
