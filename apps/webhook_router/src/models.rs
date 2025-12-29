@@ -47,17 +47,23 @@ pub struct Target {
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateEndpointRequest {
     pub name: String,
+    pub banner: Option<String>,
+    pub footer: Option<String>,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateEndpointRequest {
     pub name: Option<String>,
+    pub banner: Option<String>,
+    pub footer: Option<String>,
 }
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct Endpoint {
     pub id: String,
     pub name: String,
+    pub banner: Option<String>,
+    pub footer: Option<String>,
     pub created_at: i64,
 }
 
@@ -78,4 +84,9 @@ pub struct DeliveryOutcome {
     pub status: String,
     pub response_code: Option<u16>,
     pub error: Option<String>,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct TestSendRequest {
+    pub markdown: String,
 }

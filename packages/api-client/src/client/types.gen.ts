@@ -9,6 +9,8 @@ export type AppErrorResponse = {
 };
 
 export type CreateEndpointRequest = {
+    banner?: string | null;
+    footer?: string | null;
     name: string;
 };
 
@@ -27,7 +29,9 @@ export type DeliveryOutcome = {
 };
 
 export type Endpoint = {
+    banner?: string | null;
     created_at: number;
+    footer?: string | null;
     id: string;
     name: string;
 };
@@ -52,6 +56,10 @@ export type Target = {
     url: string;
 };
 
+export type TestSendRequest = {
+    markdown: string;
+};
+
 export type UemEvent = {
     id: string;
     markdown: string;
@@ -63,6 +71,8 @@ export type UemEvent = {
 };
 
 export type UpdateEndpointRequest = {
+    banner?: string | null;
+    footer?: string | null;
     name?: string | null;
 };
 
@@ -75,9 +85,9 @@ export type CheckAuthData = {
 
 export type CheckAuthErrors = {
     /**
-     * Unauthorized
+     * Forbidden
      */
-    401: unknown;
+    403: unknown;
 };
 
 export type CheckAuthResponses = {
@@ -276,6 +286,34 @@ export type DeleteTargetResponses = {
 };
 
 export type DeleteTargetResponse = DeleteTargetResponses[keyof DeleteTargetResponses];
+
+export type TestSendData = {
+    body: TestSendRequest;
+    path: {
+        /**
+         * Endpoint ID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/endpoints/{id}/test';
+};
+
+export type TestSendErrors = {
+    /**
+     * Endpoint not found
+     */
+    404: AppErrorResponse;
+};
+
+export type TestSendError = TestSendErrors[keyof TestSendErrors];
+
+export type TestSendResponses = {
+    /**
+     * Test message sent successfully
+     */
+    200: unknown;
+};
 
 export type ListEventsData = {
     body?: never;

@@ -12,7 +12,7 @@ use crate::adapters::{egress_adapter, ingress_adapter};
 use crate::db::Db;
 use crate::models::{
     BasicAuth, CreateEndpointRequest, CreateTargetRequest, DeliveryOutcome, Endpoint, EventRecord,
-    Target, UpdateEndpointRequest, UemEvent,
+    Target, TestSendRequest, UpdateEndpointRequest, UemEvent,
 };
 
 #[derive(Clone)]
@@ -47,6 +47,7 @@ pub fn api_router() -> Router<AppState> {
         .route("/endpoints/:id/targets/:target_id", delete(delete_target))
         .route("/endpoints", post(create_endpoint).get(list_endpoints))
         .route("/endpoints/:id", put(update_endpoint).get(get_endpoint))
+        .route("/endpoints/:id/test", post(test_send))
         .route("/events", get(list_events))
 }
 
@@ -63,6 +64,7 @@ pub fn api_router() -> Router<AppState> {
         get_endpoint,
         list_endpoints,
         update_endpoint,
+        test_send,
         list_events,
     ),
     components(
@@ -75,6 +77,7 @@ pub fn api_router() -> Router<AppState> {
             Endpoint,
             EventRecord,
             DeliveryOutcome,
+            TestSendRequest,
             AppErrorResponse,
         )
     ),
@@ -147,6 +150,23 @@ pub async fn ingress(
     if event.id.is_empty() {
         event.id = Uuid::new_v4().to_string();
     }
+
+    // Concatenate banner + markdown + footer
+    let mut final_markdown = String::new();
+    if let Some(banner) = &endpoint.banner {
+        if !banner.is_empty() {
+            final_markdown.push_str(banner);
+            final_markdown.push_str("\n\n");
+        }
+    }
+    final_markdown.push_str(&event.markdown);
+    if let Some(footer) = &endpoint.footer {
+        if !footer.is_empty() {
+            final_markdown.push_str("\n\n");
+            final_markdown.push_str(footer);
+        }
+    }
+    event.markdown = final_markdown;
 
     state
         .db
@@ -393,7 +413,7 @@ async fn update_endpoint(
     State(state): State<AppState>,
     Json(req): Json<UpdateEndpointRequest>,
 ) -> Result<Json<Endpoint>, AppError> {
-    if req.name.is_none() {
+    if req.name.is_none() && req.banner.is_none() && req.footer.is_none() {
         return Err(AppError::bad_request("no fields to update"));
     }
     let endpoint = state
@@ -403,6 +423,81 @@ async fn update_endpoint(
         .map_err(AppError::from)?;
     let endpoint = endpoint.ok_or_else(|| AppError::not_found("endpoint not found"))?;
     Ok(Json(endpoint))
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/endpoints/{id}/test",
+    params(
+        ("id" = String, Path, description = "Endpoint ID")
+    ),
+    request_body = TestSendRequest,
+    responses(
+        (status = 200, description = "Test message sent successfully", body = Value),
+        (status = 404, description = "Endpoint not found", body = AppErrorResponse)
+    ),
+    security(
+        ("basic_auth" = [])
+    )
+)]
+async fn test_send(
+    Path(endpoint_id): Path<String>,
+    State(state): State<AppState>,
+    Json(req): Json<TestSendRequest>,
+) -> Result<Json<Value>, AppError> {
+    let endpoint = state
+        .db
+        .get_endpoint(&endpoint_id)
+        .await
+        .map_err(AppError::from)?
+        .ok_or_else(|| AppError::not_found("endpoint not found"))?;
+
+    let mut event = UemEvent {
+        id: Uuid::new_v4().to_string(),
+        source: "test".to_string(),
+        timestamp: now_timestamp(),
+        title: Some("Test Message".to_string()),
+        markdown: req.markdown,
+        raw: json!({"test": true}),
+        meta: json!({}),
+    };
+
+    // Apply banner/footer concatenation
+    let mut final_markdown = String::new();
+    if let Some(banner) = &endpoint.banner {
+        if !banner.is_empty() {
+            final_markdown.push_str(banner);
+            final_markdown.push_str("\n\n");
+        }
+    }
+    final_markdown.push_str(&event.markdown);
+    if let Some(footer) = &endpoint.footer {
+        if !footer.is_empty() {
+            final_markdown.push_str("\n\n");
+            final_markdown.push_str(footer);
+        }
+    }
+    event.markdown = final_markdown;
+
+    // Fetch targets and dispatch
+    let targets = state.db.list_targets(&endpoint_id).await.map_err(AppError::from)?;
+    let mut outcomes = Vec::new();
+    for target in targets {
+        let outcome = dispatch_to_target(&state, &event, &target).await;
+        outcomes.push(outcome);
+    }
+
+    Ok(Json(json!({
+        "event_id": event.id,
+        "deliveries": outcomes,
+    })))
+}
+
+fn now_timestamp() -> i64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|duration| duration.as_secs() as i64)
+        .unwrap_or(0)
 }
 
 #[utoipa::path(

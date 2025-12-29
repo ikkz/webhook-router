@@ -1,18 +1,20 @@
 
 import { useParams } from '@tanstack/react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { listTargets, createTarget, deleteTarget, getEndpoint, CreateTargetRequest } from '@webhook-router/api-client';
-import { useState } from 'react';
-import { Plus, Loader2, Trash2, Globe, MessageSquare, ArrowLeft, Copy, Check } from 'lucide-react';
+import { listTargets, createTarget, deleteTarget, getEndpoint, updateEndpoint, CreateTargetRequest, UpdateEndpointRequest, testSend } from '@webhook-router/api-client';
+import { useState, useRef, useEffect } from 'react';
+import { Plus, Loader2, Trash2, Globe, MessageSquare, ArrowLeft, Copy, Check, Send, CheckCircle2, XCircle } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { EditorView, basicSetup } from 'codemirror';
+import { markdown } from '@codemirror/lang-markdown';
 
 export function EndpointDetailsPage() {
-    const { endpointId } = useParams({ strict: false });
+    const { endpointId } = useParams({ strict: false }) as { endpointId: string };
     const queryClient = useQueryClient();
     const [isCreating, setIsCreating] = useState(false);
 
@@ -20,7 +22,6 @@ export function EndpointDetailsPage() {
     const { data: endpoint, isLoading: isEndpointLoading } = useQuery({
         queryKey: ['endpoints', endpointId],
         queryFn: async () => {
-            // @ts-expect-error generated client types might be slightly off or strict
             const res = await getEndpoint({ path: { id: endpointId } });
             return res.data;
         }
@@ -30,7 +31,6 @@ export function EndpointDetailsPage() {
     const { data: targets, isLoading: isTargetsLoading, error } = useQuery({
         queryKey: ['targets', endpointId], // Scope query key by endpointId
         queryFn: async () => {
-            // @ts-expect-error generated client types might be slightly off or strict
             const res = await listTargets({ path: { id: endpointId } });
             return res.data;
         }
@@ -38,7 +38,6 @@ export function EndpointDetailsPage() {
 
     const createMutation = useMutation({
         mutationFn: async (data: CreateTargetRequest) => {
-            // @ts-expect-error generated client types
             const res = await createTarget({ path: { id: endpointId }, body: data });
             return res.data;
         },
@@ -50,7 +49,6 @@ export function EndpointDetailsPage() {
 
     const deleteMutation = useMutation({
         mutationFn: async (targetId: string) => {
-            // @ts-expect-error generated client types
             await deleteTarget({ path: { id: endpointId, target_id: targetId } });
         },
         onSuccess: () => {
@@ -76,7 +74,9 @@ export function EndpointDetailsPage() {
                 </div>
             </div>
 
-            <div className="border-t pt-6">
+            <div className="border-t pt-6 space-y-6">
+                <ConfigurationSection endpoint={endpoint} endpointId={endpointId} />
+                <TestSendSection endpointId={endpointId} />
                 <WebhookUrls endpointId={endpoint.id} />
 
                 <div className="flex justify-between items-center mb-4">
@@ -272,6 +272,218 @@ function WebhookUrls({ endpointId }: { endpointId: string }) {
                         );
                     })}
                 </div>
+            </CardContent>
+        </Card>
+    );
+}
+function ConfigurationSection({ endpoint, endpointId }: { endpoint: any, endpointId: string }) {
+    const queryClient = useQueryClient();
+    const [banner, setBanner] = useState(endpoint.banner || '');
+    const [footer, setFooter] = useState(endpoint.footer || '');
+    const [hasChanges, setHasChanges] = useState(false);
+
+    const bannerEditorRef = useRef<HTMLDivElement>(null);
+    const footerEditorRef = useRef<HTMLDivElement>(null);
+    const bannerViewRef = useRef<EditorView | null>(null);
+    const footerViewRef = useRef<EditorView | null>(null);
+
+    // Initialize CodeMirror editors
+    useEffect(() => {
+        if (bannerEditorRef.current && !bannerViewRef.current) {
+            bannerViewRef.current = new EditorView({
+                doc: banner,
+                extensions: [
+                    basicSetup,
+                    markdown(),
+                    EditorView.updateListener.of((update) => {
+                        if (update.docChanged) {
+                            const newValue = update.state.doc.toString();
+                            setBanner(newValue);
+                            setHasChanges(newValue !== (endpoint.banner || '') || footer !== (endpoint.footer || ''));
+                        }
+                    }),
+                ],
+                parent: bannerEditorRef.current,
+            });
+        }
+
+        if (footerEditorRef.current && !footerViewRef.current) {
+            footerViewRef.current = new EditorView({
+                doc: footer,
+                extensions: [
+                    basicSetup,
+                    markdown(),
+                    EditorView.updateListener.of((update) => {
+                        if (update.docChanged) {
+                            const newValue = update.state.doc.toString();
+                            setFooter(newValue);
+                            setHasChanges(banner !== (endpoint.banner || '') || newValue !== (endpoint.footer || ''));
+                        }
+                    }),
+                ],
+                parent: footerEditorRef.current,
+            });
+        }
+
+        return () => {
+            if (bannerViewRef.current) {
+                bannerViewRef.current.destroy();
+                bannerViewRef.current = null;
+            }
+            if (footerViewRef.current) {
+                footerViewRef.current.destroy();
+                footerViewRef.current = null;
+            }
+        };
+    }, []);
+
+    const updateMutation = useMutation({
+        mutationFn: async (data: UpdateEndpointRequest) => {
+            const res = await updateEndpoint({ path: { id: endpointId }, body: data });
+            return res.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['endpoints', endpointId] });
+            setHasChanges(false);
+        },
+    });
+
+    const handleSave = () => {
+        updateMutation.mutate({ banner, footer });
+    };
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Markdown Configuration</CardTitle>
+                <CardDescription>
+                    Configure banner and footer text that will be added to all incoming events
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="space-y-2">
+                    <Label>Banner (prepended to incoming messages)</Label>
+                    <div ref={bannerEditorRef} className="border rounded min-h-[100px]" />
+                </div>
+                <div className="space-y-2">
+                    <Label>Footer (appended to incoming messages)</Label>
+                    <div ref={footerEditorRef} className="border rounded min-h-[100px]" />
+                </div>
+                <Button
+                    onClick={handleSave}
+                    disabled={!hasChanges || updateMutation.isPending}
+                >
+                    {updateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                    Save Configuration
+                </Button>
+                {updateMutation.isSuccess && (
+                    <p className="text-sm text-green-600">Configuration saved successfully!</p>
+                )}
+            </CardContent>
+        </Card>
+    );
+}
+
+function TestSendSection({ endpointId }: { endpointId: string }) {
+    const [testMarkdown, setTestMarkdown] = useState('# Test Message\n\nThis is a test message to verify your endpoint configuration.');
+    const [deliveryResults, setDeliveryResults] = useState<any>(null);
+
+    const editorRef = useRef<HTMLDivElement>(null);
+    const viewRef = useRef<EditorView | null>(null);
+
+    useEffect(() => {
+        if (editorRef.current && !viewRef.current) {
+            viewRef.current = new EditorView({
+                doc: testMarkdown,
+                extensions: [
+                    basicSetup,
+                    markdown(),
+                    EditorView.updateListener.of((update) => {
+                        if (update.docChanged) {
+                            setTestMarkdown(update.state.doc.toString());
+                        }
+                    }),
+                ],
+                parent: editorRef.current,
+            });
+        }
+
+        return () => {
+            if (viewRef.current) {
+                viewRef.current.destroy();
+                viewRef.current = null;
+            }
+        };
+    }, []);
+
+    const testSendMutation = useMutation({
+        mutationFn: async (markdown: string) => {
+            const res = await testSend({
+                path: { id: endpointId },
+                body: { markdown },
+            });
+            return res.data;
+        },
+        onSuccess: (data) => {
+            setDeliveryResults(data);
+        },
+    });
+
+    const handleTestSend = () => {
+        setDeliveryResults(null);
+        testSendMutation.mutate(testMarkdown);
+    };
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Test Send</CardTitle>
+                <CardDescription>
+                    Send a test message to verify your configuration (banner/footer will be automatically added)
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="space-y-2">
+                    <Label>Test Markdown Content</Label>
+                    <div ref={editorRef} className="border rounded min-h-[150px]" />
+                </div>
+                <Button
+                    onClick={handleTestSend}
+                    disabled={testSendMutation.isPending}
+                >
+                    {testSendMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
+                    Send Test
+                </Button>
+
+                {deliveryResults && (
+                    <div className="mt-4 p-4 border rounded bg-muted/50">
+                        <h4 className="font-semibold mb-2">Delivery Results:</h4>
+                        <p className="text-sm text-muted-foreground mb-2">Event ID: {deliveryResults.event_id}</p>
+                        <div className="space-y-2">
+                            {deliveryResults.deliveries?.map((delivery: any, idx: number) => (
+                                <div key={idx} className="flex items-center gap-2 text-sm">
+                                    {delivery.status === 'sent' ? (
+                                        <CheckCircle2 className="w-4 h-4 text-green-500" />
+                                    ) : (
+                                        <XCircle className="w-4 h-4 text-red-500" />
+                                    )}
+                                    <span>Target {delivery.target_id}: {delivery.status}</span>
+                                    {delivery.response_code && <span className="text-muted-foreground">({delivery.response_code})</span>}
+                                    {delivery.error && <span className="text-destructive">- {delivery.error}</span>}
+                                </div>
+                            ))}
+                            {(!deliveryResults.deliveries || deliveryResults.deliveries.length === 0) && (
+                                <p className="text-sm text-muted-foreground">No targets configured for this endpoint</p>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {testSendMutation.isError && (
+                    <div className="mt-4 p-4 border border-destructive rounded bg-destructive/10">
+                        <p className="text-sm text-destructive">Failed to send test message</p>
+                    </div>
+                )}
             </CardContent>
         </Card>
     );

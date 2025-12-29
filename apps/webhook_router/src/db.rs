@@ -55,6 +55,8 @@ impl Db {
             "CREATE TABLE IF NOT EXISTS endpoints (
                 id TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
+                banner TEXT,
+                footer TEXT,
                 created_at INTEGER NOT NULL
             )",
         )
@@ -199,11 +201,13 @@ impl Db {
         let created_at = now_timestamp();
 
         sqlx::query(
-            "INSERT INTO endpoints (id, name, created_at)
-             VALUES (?, ?, ?)",
+            "INSERT INTO endpoints (id, name, banner, footer, created_at)
+             VALUES (?, ?, ?, ?, ?)",
         )
         .bind(&id)
         .bind(&req.name)
+        .bind(&req.banner)
+        .bind(&req.footer)
         .bind(created_at)
         .execute(&self.pool)
         .await?;
@@ -211,13 +215,15 @@ impl Db {
         Ok(Endpoint {
             id,
             name: req.name,
+            banner: req.banner,
+            footer: req.footer,
             created_at,
         })
     }
 
     pub async fn list_endpoints(&self) -> Result<Vec<Endpoint>, sqlx::Error> {
         let rows = sqlx::query(
-            "SELECT id, name, created_at
+            "SELECT id, name, banner, footer, created_at
              FROM endpoints ORDER BY created_at DESC",
         )
         .fetch_all(&self.pool)
@@ -228,6 +234,8 @@ impl Db {
             .map(|row| Endpoint {
                 id: row.get("id"),
                 name: row.get("name"),
+                banner: row.get("banner"),
+                footer: row.get("footer"),
                 created_at: row.get("created_at"),
             })
             .collect())
@@ -235,7 +243,7 @@ impl Db {
 
     pub async fn get_endpoint(&self, id: &str) -> Result<Option<Endpoint>, sqlx::Error> {
         let row = sqlx::query(
-            "SELECT id, name, created_at
+            "SELECT id, name, banner, footer, created_at
              FROM endpoints WHERE id = ?",
         )
         .bind(id)
@@ -245,6 +253,8 @@ impl Db {
         Ok(row.map(|row| Endpoint {
             id: row.get("id"),
             name: row.get("name"),
+            banner: row.get("banner"),
+            footer: row.get("footer"),
             created_at: row.get("created_at"),
         }))
     }
@@ -262,11 +272,19 @@ impl Db {
         if let Some(name) = req.name {
             endpoint.name = name;
         }
+        if req.banner.is_some() {
+            endpoint.banner = req.banner;
+        }
+        if req.footer.is_some() {
+            endpoint.footer = req.footer;
+        }
 
         sqlx::query(
-            "UPDATE endpoints SET name = ? WHERE id = ?",
+            "UPDATE endpoints SET name = ?, banner = ?, footer = ? WHERE id = ?",
         )
         .bind(&endpoint.name)
+        .bind(&endpoint.banner)
+        .bind(&endpoint.footer)
         .bind(&endpoint.id)
         .execute(&self.pool)
         .await?;
@@ -376,6 +394,8 @@ mod tests {
         let endpoint = db
             .create_endpoint(CreateEndpointRequest {
                 name: "demo".to_string(),
+                banner: None,
+                footer: None,
             })
             .await
             .expect("create endpoint");

@@ -3,8 +3,8 @@
 import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen.js';
-import { checkAuth, createEndpoint, createTarget, deleteTarget, getEndpoint, healthz, ingress, listEndpoints, listEvents, listTargets, type Options, updateEndpoint } from '../sdk.gen.js';
-import type { CheckAuthData, CreateEndpointData, CreateEndpointError, CreateEndpointResponse, CreateTargetData, CreateTargetError, CreateTargetResponse, DeleteTargetData, DeleteTargetError, DeleteTargetResponse, GetEndpointData, GetEndpointError, GetEndpointResponse, HealthzData, HealthzResponse, IngressData, IngressError, ListEndpointsData, ListEndpointsResponse, ListEventsData, ListEventsResponse, ListTargetsData, ListTargetsResponse, UpdateEndpointData, UpdateEndpointError, UpdateEndpointResponse } from '../types.gen.js';
+import { checkAuth, createEndpoint, createTarget, deleteTarget, getEndpoint, healthz, ingress, listEndpoints, listEvents, listTargets, type Options, testSend, updateEndpoint } from '../sdk.gen.js';
+import type { CheckAuthData, CreateEndpointData, CreateEndpointError, CreateEndpointResponse, CreateTargetData, CreateTargetError, CreateTargetResponse, DeleteTargetData, DeleteTargetError, DeleteTargetResponse, GetEndpointData, GetEndpointError, GetEndpointResponse, HealthzData, HealthzResponse, IngressData, IngressError, ListEndpointsData, ListEndpointsResponse, ListEventsData, ListEventsResponse, ListTargetsData, ListTargetsResponse, TestSendData, TestSendError, UpdateEndpointData, UpdateEndpointError, UpdateEndpointResponse } from '../types.gen.js';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -145,6 +145,20 @@ export const deleteTargetMutation = (options?: Partial<Options<DeleteTargetData>
     const mutationOptions: UseMutationOptions<DeleteTargetResponse, DeleteTargetError, Options<DeleteTargetData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await deleteTarget({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const testSendMutation = (options?: Partial<Options<TestSendData>>): UseMutationOptions<unknown, TestSendError, Options<TestSendData>> => {
+    const mutationOptions: UseMutationOptions<unknown, TestSendError, Options<TestSendData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await testSend({
                 ...options,
                 ...fnOptions,
                 throwOnError: true

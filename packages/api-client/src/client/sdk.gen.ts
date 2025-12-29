@@ -2,7 +2,7 @@
 
 import { client } from './client.gen.js';
 import type { Client, Options as Options2, TDataShape } from './client/index.js';
-import type { CheckAuthData, CheckAuthErrors, CheckAuthResponses, CreateEndpointData, CreateEndpointErrors, CreateEndpointResponses, CreateTargetData, CreateTargetErrors, CreateTargetResponses, DeleteTargetData, DeleteTargetErrors, DeleteTargetResponses, GetEndpointData, GetEndpointErrors, GetEndpointResponses, HealthzData, HealthzResponses, IngressData, IngressErrors, IngressResponses, ListEndpointsData, ListEndpointsResponses, ListEventsData, ListEventsResponses, ListTargetsData, ListTargetsResponses, UpdateEndpointData, UpdateEndpointErrors, UpdateEndpointResponses } from './types.gen.js';
+import type { CheckAuthData, CheckAuthErrors, CheckAuthResponses, CreateEndpointData, CreateEndpointErrors, CreateEndpointResponses, CreateTargetData, CreateTargetErrors, CreateTargetResponses, DeleteTargetData, DeleteTargetErrors, DeleteTargetResponses, GetEndpointData, GetEndpointErrors, GetEndpointResponses, HealthzData, HealthzResponses, IngressData, IngressErrors, IngressResponses, ListEndpointsData, ListEndpointsResponses, ListEventsData, ListEventsResponses, ListTargetsData, ListTargetsResponses, TestSendData, TestSendErrors, TestSendResponses, UpdateEndpointData, UpdateEndpointErrors, UpdateEndpointResponses } from './types.gen.js';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -54,6 +54,15 @@ export const createTarget = <ThrowOnError extends boolean = false>(options: Opti
 });
 
 export const deleteTarget = <ThrowOnError extends boolean = false>(options: Options<DeleteTargetData, ThrowOnError>) => (options.client ?? client).delete<DeleteTargetResponses, DeleteTargetErrors, ThrowOnError>({ url: '/api/endpoints/{id}/targets/{target_id}', ...options });
+
+export const testSend = <ThrowOnError extends boolean = false>(options: Options<TestSendData, ThrowOnError>) => (options.client ?? client).post<TestSendResponses, TestSendErrors, ThrowOnError>({
+    url: '/api/endpoints/{id}/test',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
 
 export const listEvents = <ThrowOnError extends boolean = false>(options?: Options<ListEventsData, ThrowOnError>) => (options?.client ?? client).get<ListEventsResponses, unknown, ThrowOnError>({ url: '/api/events', ...options });
 
