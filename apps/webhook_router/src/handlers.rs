@@ -88,6 +88,7 @@ pub fn api_router() -> Router<AppState> {
 pub struct ApiDoc;
 
 #[derive(utoipa::ToSchema)]
+#[allow(dead_code)]
 pub struct AppErrorResponse {
     pub error: String,
 }

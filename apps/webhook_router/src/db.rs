@@ -171,6 +171,7 @@ impl Db {
         Ok(result.rows_affected())
     }
 
+    #[allow(dead_code)]
     pub async fn get_target(&self, id: &str) -> Result<Option<Target>, sqlx::Error> {
         let row = sqlx::query(
             "SELECT id, endpoint_id, name, kind, url, headers, created_at

@@ -217,6 +217,7 @@ impl LarkConverter {
     }
 }
 
+#[allow(dead_code)]
 pub struct WecomConverter;
 
 impl WecomConverter {
@@ -224,15 +225,18 @@ impl WecomConverter {
     /// or just passes it through if it's mostly compatible.
     /// WeCom supports: # Headers, **bold**, [link](url), code, > quote, <font>
     /// It does NOT support: *italic* (sometimes), tables, images (in markdown).
+    #[allow(dead_code)]
     pub fn convert(markdown: &str) -> String {
         markdown.to_string() // Pass-through for now, can be optimized
     }
 }
 
+#[allow(dead_code)]
 pub struct DingTalkConverter;
 
 impl DingTalkConverter {
      /// DingTalk supports: # Headers, **bold**, *italic*, [link](url), > quote, images.
+     #[allow(dead_code)]
      pub fn convert(markdown: &str) -> String {
         markdown.to_string() // Pass-through for now
     }

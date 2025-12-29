@@ -13,7 +13,6 @@ mod handlers;
 mod models;
 mod utils;
 
-use console_handlers::console_router;
 use handlers::{api_router, basic_auth, healthz, ingress, AppState, ApiDoc};
 use models::BasicAuth;
 
