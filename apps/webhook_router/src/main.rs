@@ -31,6 +31,8 @@ struct Args {
     generate_openapi: bool,
     #[arg(long, env = "WEBHOOK_ROUTER_SWAGGER_UI")]
     swagger_ui: bool,
+    #[arg(long, env = "WEBHOOK_ROUTER_PUBLIC_INGRESS_BASE_URL")]
+    public_ingress_base_url: Option<String>,
 }
 
 #[tokio::main]
@@ -59,6 +61,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             password: args.password,
         },
         http: reqwest::Client::new(),
+        console_html: std::sync::Arc::from(console_handlers::build_console_html(
+            args.public_ingress_base_url.as_deref(),
+        )),
     };
 
     // Protected API routes with authentication

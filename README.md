@@ -31,6 +31,7 @@ All CLI flags are also available via environment variables (useful for Docker).
 - `--password` / `WEBHOOK_ROUTER_PASSWORD` (required)
 - `--swagger-ui` / `WEBHOOK_ROUTER_SWAGGER_UI`
 - `--generate-openapi` / `WEBHOOK_ROUTER_GENERATE_OPENAPI`
+- `--public-ingress-base-url` / `WEBHOOK_ROUTER_PUBLIC_INGRESS_BASE_URL` (optional, e.g. `https://data.example.com/webhooks`)
 
 ### Reverse proxy
 As long as you set a strong password, exposing the bind port directly to the public internet is safe enough. If you only want to expose specific webhook endpoints publicly, you can use a reverse proxy for path routing. Example Caddy config:
@@ -53,6 +54,9 @@ With this setup, the console shows an ingress URL like:
 
 When configuring external platforms, use:
 `https://data.example.com/webhooks/5bc06725-97e9-4cc7-92f9-9258972687cb/lark`
+
+To have the console display the reverse proxy URL, set:
+`WEBHOOK_ROUTER_PUBLIC_INGRESS_BASE_URL=https://data.example.com/webhooks`
 
 ## Repo layout
 - `apps/webhook_router`: Rust backend (Axum + SQLite)

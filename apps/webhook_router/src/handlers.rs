@@ -23,6 +23,7 @@ pub struct AppState {
     pub db: Db,
     pub auth: BasicAuth,
     pub http: reqwest::Client,
+    pub console_html: std::sync::Arc<str>,
 }
 
 #[utoipa::path(

@@ -227,8 +227,15 @@ function CreateTargetForm({ onSubmit, onCancel, isLoading }: { onSubmit: (data: 
 function WebhookUrls({ endpointId }: { endpointId: string }) {
     const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
 
-    // Get the base URL from the current window location
-    const baseUrl = window.location.origin;
+    const ingressBaseUrl = (() => {
+        const configuredBase = (
+            window as Window & { __WEBHOOK_ROUTER_INGRESS_BASE_URL__?: string }
+        ).__WEBHOOK_ROUTER_INGRESS_BASE_URL__;
+        if (configuredBase && configuredBase.trim()) {
+            return configuredBase.trim().replace(/\/+$/, '');
+        }
+        return `${window.location.origin}/ingress`;
+    })();
 
     const platforms = [
         { name: 'Slack', value: 'slack' },
@@ -239,7 +246,7 @@ function WebhookUrls({ endpointId }: { endpointId: string }) {
     ];
 
     const copyToClipboard = async (platform: string) => {
-        const url = `${baseUrl}/ingress/${endpointId}/${platform}`;
+        const url = `${ingressBaseUrl}/${endpointId}/${platform}`;
         try {
             await navigator.clipboard.writeText(url);
             setCopiedUrl(url);
@@ -258,7 +265,7 @@ function WebhookUrls({ endpointId }: { endpointId: string }) {
             <CardContent>
                 <div className="space-y-3">
                     {platforms.map(({ name, value }) => {
-                        const url = `${baseUrl}/ingress/${endpointId}/${value}`;
+                        const url = `${ingressBaseUrl}/${endpointId}/${value}`;
                         const isCopied = copiedUrl === url;
 
                         return (
