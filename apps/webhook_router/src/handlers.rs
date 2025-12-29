@@ -6,13 +6,15 @@ use axum::{Json, Router};
 use utoipa::OpenApi;
 use base64::Engine;
 use serde_json::{json, Value};
+use tokio::task::JoinSet;
+use tracing::error;
 use uuid::Uuid;
 
 use crate::adapters::{egress_adapter, ingress_adapter};
 use crate::db::Db;
 use crate::models::{
-    BasicAuth, CreateEndpointRequest, CreateTargetRequest, DeliveryOutcome, Endpoint, EventRecord,
-    Target, TestSendRequest, UpdateEndpointRequest, UemEvent,
+    BasicAuth, CreateEndpointRequest, CreateTargetRequest, DeliveryOutcome, DeliveryRecord, Endpoint,
+    EventRecord, Target, TestSendRequest, UpdateEndpointRequest, UemEvent,
 };
 use crate::utils::format::format_markdown;
 
@@ -77,6 +79,7 @@ pub fn api_router() -> Router<AppState> {
             UpdateEndpointRequest,
             Endpoint,
             EventRecord,
+            DeliveryRecord,
             DeliveryOutcome,
             TestSendRequest,
             AppErrorResponse,
@@ -185,10 +188,19 @@ pub async fn ingress(
     // Fetch targets for this endpoint
     let targets = state.db.list_targets(&endpoint.id).await.map_err(AppError::from)?;
     
-    let mut outcomes = Vec::new();
+    let mut tasks = JoinSet::new();
     for target in targets {
-        let outcome = dispatch_to_target(&state, &event, &target).await;
-        outcomes.push(outcome);
+        let state = state.clone();
+        let event = event.clone();
+        tasks.spawn(async move { dispatch_to_target(&state, &event, &target).await });
+    }
+
+    let mut outcomes = Vec::new();
+    while let Some(result) = tasks.join_next().await {
+        match result {
+            Ok(outcome) => outcomes.push(outcome),
+            Err(err) => error!("dispatch task failed: {}", err),
+        }
     }
 
     Ok(Json(json!({
@@ -495,10 +507,19 @@ async fn test_send(
 
     // Fetch targets and dispatch
     let targets = state.db.list_targets(&endpoint_id).await.map_err(AppError::from)?;
-    let mut outcomes = Vec::new();
+    let mut tasks = JoinSet::new();
     for target in targets {
-        let outcome = dispatch_to_target(&state, &event, &target).await;
-        outcomes.push(outcome);
+        let state = state.clone();
+        let event = event.clone();
+        tasks.spawn(async move { dispatch_to_target(&state, &event, &target).await });
+    }
+
+    let mut outcomes = Vec::new();
+    while let Some(result) = tasks.join_next().await {
+        match result {
+            Ok(outcome) => outcomes.push(outcome),
+            Err(err) => error!("dispatch task failed: {}", err),
+        }
     }
 
     Ok(Json(json!({

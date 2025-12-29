@@ -87,6 +87,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let listener = tokio::net::TcpListener::bind(&args.bind).await?;
     tracing::info!("listening on {}", args.bind);
+    tracing::info!("console: http://{}/console", args.bind);
+    tracing::info!(
+        "ingress: http://{}/ingress/:endpoint_id/:platform",
+        args.bind
+    );
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())
         .await?;

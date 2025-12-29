@@ -587,6 +587,52 @@
           }
         }
       },
+      "DeliveryRecord": {
+        "type": "object",
+        "required": [
+          "target_id",
+          "status",
+          "created_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "response_code": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "minimum": 0
+          },
+          "status": {
+            "type": "string"
+          },
+          "target_id": {
+            "type": "string"
+          },
+          "target_kind": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "target_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
       "Endpoint": {
         "type": "object",
         "required": [
@@ -627,12 +673,19 @@
           "platform",
           "markdown",
           "raw",
-          "created_at"
+          "created_at",
+          "deliveries"
         ],
         "properties": {
           "created_at": {
             "type": "integer",
             "format": "int64"
+          },
+          "deliveries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeliveryRecord"
+            }
           },
           "endpoint_id": {
             "type": "string"

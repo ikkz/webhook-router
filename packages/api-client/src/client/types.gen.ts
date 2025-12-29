@@ -28,6 +28,16 @@ export type DeliveryOutcome = {
     target_id: string;
 };
 
+export type DeliveryRecord = {
+    created_at: number;
+    error?: string | null;
+    response_code?: number | null;
+    status: string;
+    target_id: string;
+    target_kind?: string | null;
+    target_name?: string | null;
+};
+
 export type Endpoint = {
     banner?: string | null;
     created_at: number;
@@ -38,6 +48,7 @@ export type Endpoint = {
 
 export type EventRecord = {
     created_at: number;
+    deliveries: Array<DeliveryRecord>;
     endpoint_id: string;
     id: string;
     markdown: string;

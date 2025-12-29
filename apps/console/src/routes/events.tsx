@@ -47,12 +47,17 @@ export function EventsPage() {
                             <TableHead className="w-[150px]">Endpoint</TableHead>
                             <TableHead className="w-[100px]">Platform</TableHead>
                             <TableHead>Title</TableHead>
+                            <TableHead className="w-[160px]">Deliveries</TableHead>
                             <TableHead className="w-[200px]">Time</TableHead>
                             <TableHead className="w-[80px]">Preview</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {events?.map((event) => (
+                        {events?.map((event) => {
+                            const deliveries = event.deliveries ?? [];
+                            const sentCount = deliveries.filter(d => d.status === 'sent').length;
+                            const failedCount = deliveries.filter(d => d.status !== 'sent').length;
+                            return (
                             <TableRow key={event.id}>
                                 <TableCell className="font-mono text-xs">{event.id?.slice(0, 8)}</TableCell>
                                 <TableCell>
@@ -66,6 +71,15 @@ export function EventsPage() {
                                 </TableCell>
                                 <TableCell className="capitalize">{event.platform}</TableCell>
                                 <TableCell className="truncate max-w-[300px]">{event.title || '-'}</TableCell>
+                                <TableCell>
+                                    <div className="text-xs">
+                                        <span className="text-emerald-600">{sentCount} sent</span>
+                                        <span className="mx-2 text-muted-foreground">/</span>
+                                        <span className={failedCount > 0 ? "text-destructive" : "text-muted-foreground"}>
+                                            {failedCount} failed
+                                        </span>
+                                    </div>
+                                </TableCell>
                                 <TableCell className="text-muted-foreground">{new Date(event.created_at * 1000).toLocaleString()}</TableCell>
                                 <TableCell>
                                     <Button
@@ -77,10 +91,10 @@ export function EventsPage() {
                                     </Button>
                                 </TableCell>
                             </TableRow>
-                        ))}
+                        )})}
                         {events?.length === 0 && (
                             <TableRow>
-                                <TableCell colSpan={6} className="text-center text-muted-foreground">No events found.</TableCell>
+                                <TableCell colSpan={7} className="text-center text-muted-foreground">No events found.</TableCell>
                             </TableRow>
                         )}
                     </TableBody>
@@ -97,6 +111,36 @@ export function EventsPage() {
                             </Button>
                         </div>
                         <div className="p-4 overflow-y-auto space-y-4 flex-1">
+                            <div>
+                                <h4 className="text-sm font-medium mb-2">Deliveries</h4>
+                                {previewEvent.deliveries?.length ? (
+                                    <div className="space-y-2">
+                                        {previewEvent.deliveries.map((delivery) => (
+                                            <div key={`${delivery.target_id}-${delivery.created_at}`} className="rounded-md border p-3">
+                                                <div className="flex items-center justify-between text-sm">
+                                                    <div className="font-medium">
+                                                        {delivery.target_name || delivery.target_id.slice(0, 8)}
+                                                        {delivery.target_kind ? (
+                                                            <span className="ml-2 text-xs text-muted-foreground">({delivery.target_kind})</span>
+                                                        ) : null}
+                                                    </div>
+                                                    <div className={delivery.status === 'sent' ? "text-emerald-600" : "text-destructive"}>
+                                                        {delivery.status}
+                                                        {delivery.response_code ? ` (${delivery.response_code})` : ''}
+                                                    </div>
+                                                </div>
+                                                {delivery.error ? (
+                                                    <div className="mt-2 text-xs text-destructive whitespace-pre-wrap">
+                                                        {delivery.error}
+                                                    </div>
+                                                ) : null}
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-sm text-muted-foreground">No deliveries recorded.</div>
+                                )}
+                            </div>
                             <div>
                                 <h4 className="text-sm font-medium mb-1">Markdown Content</h4>
                                 <div className="bg-muted p-3 rounded-md text-sm whitespace-pre-wrap font-mono">
@@ -119,4 +163,3 @@ export function EventsPage() {
         </div>
     );
 }
-

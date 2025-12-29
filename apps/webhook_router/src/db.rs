@@ -1,12 +1,13 @@
+use std::collections::HashMap;
 use std::str::FromStr;
 
 use serde_json::Value;
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePool, SqlitePoolOptions};
-use sqlx::Row;
+use sqlx::{QueryBuilder, Row, Sqlite};
 use uuid::Uuid;
 
 use crate::models::{
-    CreateEndpointRequest, CreateTargetRequest, Endpoint, EventRecord, Target,
+    CreateEndpointRequest, CreateTargetRequest, DeliveryRecord, Endpoint, EventRecord, Target,
     UpdateEndpointRequest, UemEvent,
 };
 
@@ -263,6 +264,7 @@ impl Db {
             markdown: event.markdown.clone(),
             raw: event.raw.clone(),
             created_at,
+            deliveries: Vec::new(),
         })
     }
 
@@ -298,10 +300,14 @@ impl Db {
         .fetch_all(&self.pool)
         .await?;
 
-        Ok(rows
-            .into_iter()
-            .map(|row| EventRecord {
-                id: row.get("id"),
+        let mut events = Vec::new();
+        let mut event_ids = Vec::new();
+
+        for row in rows {
+            let id: String = row.get("id");
+            event_ids.push(id.clone());
+            events.push(EventRecord {
+                id,
                 endpoint_id: row.get("endpoint_id"),
                 platform: row.get("platform"),
                 title: row.get::<Option<String>, _>("title"),
@@ -309,8 +315,56 @@ impl Db {
                 raw: serde_json::from_str(&row.get::<String, _>("raw"))
                     .unwrap_or(Value::Null),
                 created_at: row.get("created_at"),
-            })
-            .collect())
+                deliveries: Vec::new(),
+            });
+        }
+
+        if event_ids.is_empty() {
+            return Ok(events);
+        }
+
+        let mut builder = QueryBuilder::<Sqlite>::new(
+            "SELECT d.event_id, d.target_id, t.name AS target_name, t.kind AS target_kind, d.status, d.response_code, d.error, d.created_at \
+             FROM deliveries d \
+             LEFT JOIN targets t ON t.id = d.target_id \
+             WHERE d.event_id IN (",
+        );
+        {
+            let mut separated = builder.separated(", ");
+            for event_id in &event_ids {
+                separated.push_bind(event_id);
+            }
+        }
+        builder.push(") ORDER BY d.created_at ASC");
+
+        let delivery_rows = builder.build().fetch_all(&self.pool).await?;
+        let mut deliveries_by_event: HashMap<String, Vec<DeliveryRecord>> = HashMap::new();
+        for row in delivery_rows {
+            let event_id: String = row.get("event_id");
+            let delivery = DeliveryRecord {
+                target_id: row.get("target_id"),
+                target_name: row.get::<Option<String>, _>("target_name"),
+                target_kind: row.get::<Option<String>, _>("target_kind"),
+                status: row.get("status"),
+                response_code: row
+                    .get::<Option<i64>, _>("response_code")
+                    .map(|code| code as u16),
+                error: row.get::<Option<String>, _>("error"),
+                created_at: row.get("created_at"),
+            };
+            deliveries_by_event
+                .entry(event_id)
+                .or_default()
+                .push(delivery);
+        }
+
+        for event in &mut events {
+            if let Some(deliveries) = deliveries_by_event.remove(&event.id) {
+                event.deliveries = deliveries;
+            }
+        }
+
+        Ok(events)
     }
 }
 

@@ -68,6 +68,17 @@ pub struct Endpoint {
 }
 
 #[derive(Debug, Serialize, ToSchema)]
+pub struct DeliveryRecord {
+    pub target_id: String,
+    pub target_name: Option<String>,
+    pub target_kind: Option<String>,
+    pub status: String,
+    pub response_code: Option<u16>,
+    pub error: Option<String>,
+    pub created_at: i64,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
 pub struct EventRecord {
     pub id: String,
     pub endpoint_id: String,
@@ -76,6 +87,7 @@ pub struct EventRecord {
     pub markdown: String,
     pub raw: Value,
     pub created_at: i64,
+    pub deliveries: Vec<DeliveryRecord>,
 }
 
 #[derive(Debug, Serialize, ToSchema)]
