@@ -20,6 +20,7 @@ test.describe('Endpoint Configuration', () => {
         await expect(page).toHaveURL(/.*#\/endpoints\/[a-zA-Z0-9-]+/);
 
         // Wait for Configuration section to be visible
+        await page.click('button[role="tab"]:has-text("Configuration")');
         await expect(page.locator('text=Markdown Configuration')).toBeVisible();
 
         // Find the CodeMirror editors - they should be inside divs with specific classes
@@ -42,6 +43,7 @@ test.describe('Endpoint Configuration', () => {
 
         // Reload page to verify persistence
         await page.reload();
+        await page.click('button[role="tab"]:has-text("Configuration")');
         await page.waitForSelector('text=Markdown Configuration', { timeout: 10000 });
 
         // Verify the content persisted (check that editors contain our text)
@@ -82,6 +84,9 @@ test.describe('Endpoint Configuration', () => {
 
             // NOW TEST THE UI - Navigate to endpoint details page
             await page.goto(`/console#/endpoints/${endpoint.id}`);
+
+            // Switch to Configuration tab
+            await page.click('button[role="tab"]:has-text("Configuration")');
             await page.waitForSelector('text=Test Send', { timeout: 10000 });
 
             // Wait for页面加载和 CodeMirror 编辑器初始化
@@ -175,6 +180,7 @@ test.describe('Endpoint Configuration', () => {
         await page.click(`text=${endpointName}`);
 
         // Configuration section should be visible with empty editors
+        await page.click('button[role="tab"]:has-text("Configuration")');
         await expect(page.locator('text=Markdown Configuration')).toBeVisible();
 
         // Editors should exist but be empty
@@ -210,6 +216,9 @@ test.describe('Endpoint Configuration', () => {
 
         // Navigate to endpoint
         await page.goto(`/console#/endpoints/${endpoint.id}`);
+
+        // Switch to Configuration tab
+        await page.click('button[role="tab"]:has-text("Configuration")');
         await page.waitForSelector('text=Markdown Configuration', { timeout: 10000 });
 
         // Verify initial content is displayed
@@ -228,6 +237,7 @@ test.describe('Endpoint Configuration', () => {
 
         // Reload and verify update persisted
         await page.reload();
+        await page.click('button[role="tab"]:has-text("Configuration")');
         await page.waitForSelector('text=Markdown Configuration', { timeout: 10000 });
         await expect(page.locator('.cm-content').first()).toContainText('Updated Banner');
     });
@@ -243,6 +253,7 @@ test.describe('Endpoint Configuration', () => {
         await page.click(`text=${endpointName}`);
 
         // Wait for test send section
+        await page.click('button[role="tab"]:has-text("Configuration")');
         await expect(page.locator('text=Test Send')).toBeVisible();
 
         // Click send test

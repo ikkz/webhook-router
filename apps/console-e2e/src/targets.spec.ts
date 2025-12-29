@@ -104,7 +104,7 @@ test.describe('Targets Management', () => {
 
         // Find and click delete button (trash icon)
         // The delete button is within the same card as the target name
-        const targetCard = page.locator(`text=${targetName}`).locator('..').locator('..');
+        const targetCard = page.locator('.p-4', { has: page.locator(`text=${targetName}`) });
 
         // Listen for confirmation dialog
         page.on('dialog', dialog => dialog.accept());

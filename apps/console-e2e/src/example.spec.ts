@@ -18,7 +18,7 @@ test.describe('Authentication', () => {
     await page.waitForURL(/.*#\/$/, { timeout: 10000 });
 
     // Verify we're on the home page
-    await expect(page.locator('h3:has-text("Welcome to Webhook Router Console")')).toBeVisible();
+    await expect(page.locator('h2:has-text("Endpoints")')).toBeVisible();
   });
 
   test('should fail login with invalid credentials', async ({ page }) => {
