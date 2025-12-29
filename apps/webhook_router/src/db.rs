@@ -292,13 +292,44 @@ impl Db {
         Ok(())
     }
 
-    pub async fn list_events(&self) -> Result<Vec<EventRecord>, sqlx::Error> {
-        let rows = sqlx::query(
-            "SELECT id, endpoint_id, platform, title, markdown, raw, created_at
-             FROM events ORDER BY created_at DESC LIMIT 100",
-        )
-        .fetch_all(&self.pool)
-        .await?;
+    pub async fn list_events(
+        &self,
+        endpoint_id: Option<&str>,
+        page: Option<i64>,
+        page_size: Option<i64>,
+    ) -> Result<Vec<EventRecord>, sqlx::Error> {
+        let page = page.unwrap_or(1).max(1);
+        let page_size = page_size.unwrap_or(50).clamp(1, 100);
+        let offset = (page - 1) * page_size;
+
+        let (query_str, has_filter) = if let Some(_ep_id) = endpoint_id {
+            (
+                "SELECT id, endpoint_id, platform, title, markdown, raw, created_at
+                 FROM events WHERE endpoint_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?",
+                true,
+            )
+        } else {
+            (
+                "SELECT id, endpoint_id, platform, title, markdown, raw, created_at
+                 FROM events ORDER BY created_at DESC LIMIT ? OFFSET ?",
+                false,
+            )
+        };
+
+        let rows = if has_filter {
+            sqlx::query(query_str)
+                .bind(endpoint_id.unwrap())
+                .bind(page_size)
+                .bind(offset)
+                .fetch_all(&self.pool)
+                .await?
+        } else {
+            sqlx::query(query_str)
+                .bind(page_size)
+                .bind(offset)
+                .fetch_all(&self.pool)
+                .await?
+        };
 
         let mut events = Vec::new();
         let mut event_ids = Vec::new();
@@ -426,7 +457,7 @@ mod tests {
             .await
             .expect("insert delivery");
 
-        let events = db.list_events().await.expect("list events");
+        let events = db.list_events(None, None, None).await.expect("list events");
         assert!(!events.is_empty());
 
         let endpoints = db.list_endpoints().await.expect("list endpoints");

@@ -1,4 +1,4 @@
-use axum::extract::{Path, State};
+use axum::extract::{Path, Query, State};
 use axum::http::{HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{delete, get, post, put};
@@ -563,9 +563,21 @@ async fn get_endpoint(
     Ok(Json(endpoint))
 }
 
+#[derive(serde::Deserialize)]
+struct ListEventsQuery {
+    endpoint_id: Option<String>,
+    page: Option<i64>,
+    page_size: Option<i64>,
+}
+
 #[utoipa::path(
     get,
     path = "/api/events",
+    params(
+        ("endpoint_id" = Option<String>, Query, description = "Filter by endpoint ID"),
+        ("page" = Option<i64>, Query, description = "Page number (default: 1)"),
+        ("page_size" = Option<i64>, Query, description = "Items per page (default: 50, max: 100)")
+    ),
     responses(
         (status = 200, description = "List of events", body = [EventRecord])
     ),
@@ -573,8 +585,15 @@ async fn get_endpoint(
         ("basic_auth" = [])
     )
 )]
-async fn list_events(State(state): State<AppState>) -> Result<Json<Vec<EventRecord>>, AppError> {
-    let events = state.db.list_events().await.map_err(AppError::from)?;
+async fn list_events(
+    State(state): State<AppState>,
+    Query(query): Query<ListEventsQuery>,
+) -> Result<Json<Vec<EventRecord>>, AppError> {
+    let events = state
+        .db
+        .list_events(query.endpoint_id.as_deref(), query.page, query.page_size)
+        .await
+        .map_err(AppError::from)?;
     Ok(Json(events))
 }
 

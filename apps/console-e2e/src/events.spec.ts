@@ -100,4 +100,150 @@ test.describe('Events Viewing', () => {
             await mockServer.stop();
         }
     });
+
+    test('should filter events by endpoint', async ({ page, request }) => {
+        const baseUrl = getBaseUrl();
+        const mockServer = new MockTargetServer();
+        await mockServer.start();
+
+        try {
+            // Create two endpoints
+            const endpoint1Name = generateTestName('Endpoint 1');
+            const endpoint2Name = generateTestName('Endpoint 2');
+            const endpoint1 = await apiCreateEndpoint(request, baseUrl, endpoint1Name);
+            const endpoint2 = await apiCreateEndpoint(request, baseUrl, endpoint2Name);
+
+            // Create targets for both
+            await apiCreateTarget(request, baseUrl, endpoint1.id, {
+                name: 'Target 1',
+                kind: 'http',
+                url: `${mockServer.url}/ok`,
+            });
+            await apiCreateTarget(request, baseUrl, endpoint2.id, {
+                name: 'Target 2',
+                kind: 'http',
+                url: `${mockServer.url}/ok`,
+            });
+
+            // Send events to both endpoints
+            const event1Title = generateTestName('Event 1');
+            const event2Title = generateTestName('Event 2');
+
+            await sendWebhookToIngress(baseUrl, endpoint1.id, 'http', WebhookSimulator.http('Body 1', event1Title));
+            await sendWebhookToIngress(baseUrl, endpoint2.id, 'http', WebhookSimulator.http('Body 2', event2Title));
+
+            // Wait for events to be created
+            await waitFor(async () => {
+                const events = await apiListEvents(request, baseUrl);
+                return events.some((e: any) => e.title === event1Title) &&
+                    events.some((e: any) => e.title === event2Title);
+            }, 10000, 200);
+
+            await page.goto('/console#/events');
+
+            // Initially both events should be visible
+            await expect(page.locator('tr', { hasText: event1Title })).toBeVisible();
+            await expect(page.locator('tr', { hasText: event2Title })).toBeVisible();
+
+            // Filter by endpoint 1
+            await page.locator('button[role="combobox"]').click();
+            await page.locator(`div[role="option"]:has-text("${endpoint1Name}")`).click();
+
+            // Wait for filter to apply
+            await page.waitForTimeout(1000);
+
+            // Only event 1 should be visible
+            await expect(page.locator('tr', { hasText: event1Title })).toBeVisible();
+            await expect(page.locator('tr', { hasText: event2Title })).not.toBeVisible();
+
+            // Switch to endpoint 2
+            await page.locator('button[role="combobox"]').click();
+            await page.locator(`div[role="option"]:has-text("${endpoint2Name}")`).click();
+
+            // Wait for filter to apply
+            await page.waitForTimeout(1000);
+
+            // Only event 2 should be visible
+            await expect(page.locator('tr', { hasText: event2Title })).toBeVisible();
+            await expect(page.locator('tr', { hasText: event1Title })).not.toBeVisible();
+
+            // Reset filter
+            await page.locator('button[role="combobox"]').click();
+            await page.locator('div[role="option"]:has-text("All Endpoints")').click();
+
+            // Wait for filter to apply
+            await page.waitForTimeout(1000);
+
+            // Both events should be visible again
+            await expect(page.locator('tr', { hasText: event1Title })).toBeVisible();
+            await expect(page.locator('tr', { hasText: event2Title })).toBeVisible();
+        } finally {
+            await mockServer.stop();
+        }
+    });
+
+    test('should paginate events', async ({ page, request }) => {
+        const baseUrl = getBaseUrl();
+        const mockServer = new MockTargetServer();
+        await mockServer.start();
+
+        try {
+            const endpointName = generateTestName('Pagination Test');
+            const endpoint = await apiCreateEndpoint(request, baseUrl, endpointName);
+
+            await apiCreateTarget(request, baseUrl, endpoint.id, {
+                name: 'Test Target',
+                kind: 'http',
+                url: `${mockServer.url}/ok`,
+            });
+
+            // Create 25 events (more than one page with page_size=20)
+            const eventTitles: string[] = [];
+            for (let i = 0; i < 25; i++) {
+                const title = generateTestName(`Event ${i}`);
+                eventTitles.push(title);
+                await sendWebhookToIngress(baseUrl, endpoint.id, 'http', WebhookSimulator.http(`Body ${i}`, title));
+                // Small delay to ensure different timestamps
+                await new Promise(resolve => setTimeout(resolve, 50));
+            }
+
+            // Wait for all events to be created
+            await waitFor(async () => {
+                const events = await apiListEvents(request, baseUrl);
+                return events.length >= 25;
+            }, 15000, 500);
+
+            await page.goto('/console#/events');
+
+            // Check that pagination controls are visible
+            await expect(page.locator('button:has-text("Previous")')).toBeVisible();
+            await expect(page.locator('button:has-text("Next")')).toBeVisible();
+
+            // Previous should be disabled on first page
+            await expect(page.locator('button:has-text("Previous")')).toBeDisabled();
+
+            // Next should be enabled
+            await expect(page.locator('button:has-text("Next")')).toBeEnabled();
+
+            // Click next to go to page 2
+            await page.locator('button:has-text("Next")').click();
+            await page.waitForTimeout(1000);
+
+            // Now previous should be enabled
+            await expect(page.locator('button:has-text("Previous")')).toBeEnabled();
+
+            // Page indicator should show page 2
+            await expect(page.locator('text=Page 2')).toBeVisible();
+
+            // Click previous to go back to page 1
+            await page.locator('button:has-text("Previous")').click();
+            await page.waitForTimeout(1000);
+
+            // Should be back on page 1
+            await expect(page.locator('text=Page 1')).toBeVisible();
+            await expect(page.locator('button:has-text("Previous")')).toBeDisabled();
+        } finally {
+            await mockServer.stop();
+        }
+    });
 });

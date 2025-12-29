@@ -329,7 +329,20 @@ export type TestSendResponses = {
 export type ListEventsData = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        /**
+         * Filter by endpoint ID
+         */
+        endpoint_id?: string;
+        /**
+         * Page number (default: 1)
+         */
+        page?: number;
+        /**
+         * Items per page (default: 50, max: 100)
+         */
+        page_size?: number;
+    };
     url: '/api/events';
 };
 

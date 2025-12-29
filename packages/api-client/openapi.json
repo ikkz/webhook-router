@@ -397,6 +397,37 @@
       "get": {
         "tags": [],
         "operationId": "list_events",
+        "parameters": [
+          {
+            "name": "endpoint_id",
+            "in": "query",
+            "description": "Filter by endpoint ID",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number (default: 1)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "description": "Items per page (default: 50, max: 100)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "List of events",

@@ -1,18 +1,28 @@
 import { useQuery } from '@tanstack/react-query';
 import { listEvents, listEndpoints, EventRecord } from '@webhook-router/api-client';
-import { Loader2, FileText, X } from 'lucide-react';
+import { Loader2, FileText, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export function EventsPage() {
     const [previewEvent, setPreviewEvent] = useState<EventRecord | null>(null);
+    const [page, setPage] = useState(1);
+    const [selectedEndpoint, setSelectedEndpoint] = useState<string>('all');
+    const pageSize = 20;
 
     const { data: events, isLoading: isEventsLoading, error: eventsError } = useQuery({
-        queryKey: ['events'],
+        queryKey: ['events', page, selectedEndpoint],
         queryFn: async () => {
-            const res = await listEvents();
+            const res = await listEvents({
+                query: {
+                    page,
+                    page_size: pageSize,
+                    endpoint_id: selectedEndpoint === 'all' ? undefined : selectedEndpoint,
+                },
+            });
             return res.data;
         },
         refetchInterval: 5000,
@@ -32,11 +42,31 @@ export function EventsPage() {
     if (eventsError) return <div className="p-4 text-destructive">Error loading events</div>;
 
     const endpointMap = new Map(endpoints?.map(e => [e.id, e.name]));
+    const hasNextPage = events && events.length === pageSize;
+    const hasPrevPage = page > 1;
 
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-bold tracking-tight">Events</h2>
+                <div className="flex items-center gap-4">
+                    <Select value={selectedEndpoint} onValueChange={(value) => {
+                        setSelectedEndpoint(value);
+                        setPage(1);
+                    }}>
+                        <SelectTrigger className="w-[200px]">
+                            <SelectValue placeholder="All Endpoints" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Endpoints</SelectItem>
+                            {endpoints?.map((endpoint) => (
+                                <SelectItem key={endpoint.id} value={endpoint.id}>
+                                    {endpoint.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
             </div>
 
             <div className="rounded-md border">
@@ -58,40 +88,41 @@ export function EventsPage() {
                             const sentCount = deliveries.filter(d => d.status === 'sent').length;
                             const failedCount = deliveries.filter(d => d.status !== 'sent').length;
                             return (
-                            <TableRow key={event.id}>
-                                <TableCell className="font-mono text-xs">{event.id?.slice(0, 8)}</TableCell>
-                                <TableCell>
-                                    <Link
-                                        to="/endpoints/$endpointId"
-                                        params={{ endpointId: event.endpoint_id }}
-                                        className="text-primary hover:underline font-medium"
-                                    >
-                                        {endpointMap.get(event.endpoint_id) || event.endpoint_id.slice(0, 8)}
-                                    </Link>
-                                </TableCell>
-                                <TableCell className="capitalize">{event.platform}</TableCell>
-                                <TableCell className="truncate max-w-[300px]">{event.title || '-'}</TableCell>
-                                <TableCell>
-                                    <div className="text-xs">
-                                        <span className="text-emerald-600">{sentCount} sent</span>
-                                        <span className="mx-2 text-muted-foreground">/</span>
-                                        <span className={failedCount > 0 ? "text-destructive" : "text-muted-foreground"}>
-                                            {failedCount} failed
-                                        </span>
-                                    </div>
-                                </TableCell>
-                                <TableCell className="text-muted-foreground">{new Date(event.created_at * 1000).toLocaleString()}</TableCell>
-                                <TableCell>
-                                    <Button
-                                        variant="outline"
-                                        size="icon-sm"
-                                        onClick={() => setPreviewEvent(event)}
-                                    >
-                                        <FileText className="w-4 h-4" />
-                                    </Button>
-                                </TableCell>
-                            </TableRow>
-                        )})}
+                                <TableRow key={event.id}>
+                                    <TableCell className="font-mono text-xs">{event.id?.slice(0, 8)}</TableCell>
+                                    <TableCell>
+                                        <Link
+                                            to="/endpoints/$endpointId"
+                                            params={{ endpointId: event.endpoint_id }}
+                                            className="text-primary hover:underline font-medium"
+                                        >
+                                            {endpointMap.get(event.endpoint_id) || event.endpoint_id.slice(0, 8)}
+                                        </Link>
+                                    </TableCell>
+                                    <TableCell className="capitalize">{event.platform}</TableCell>
+                                    <TableCell className="truncate max-w-[300px]">{event.title || '-'}</TableCell>
+                                    <TableCell>
+                                        <div className="text-xs">
+                                            <span className="text-emerald-600">{sentCount} sent</span>
+                                            <span className="mx-2 text-muted-foreground">/</span>
+                                            <span className={failedCount > 0 ? "text-destructive" : "text-muted-foreground"}>
+                                                {failedCount} failed
+                                            </span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="text-muted-foreground">{new Date(event.created_at * 1000).toLocaleString()}</TableCell>
+                                    <TableCell>
+                                        <Button
+                                            variant="outline"
+                                            size="icon-sm"
+                                            onClick={() => setPreviewEvent(event)}
+                                        >
+                                            <FileText className="w-4 h-4" />
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            )
+                        })}
                         {events?.length === 0 && (
                             <TableRow>
                                 <TableCell colSpan={7} className="text-center text-muted-foreground">No events found.</TableCell>
@@ -99,6 +130,33 @@ export function EventsPage() {
                         )}
                     </TableBody>
                 </Table>
+            </div>
+
+            {/* Pagination Controls */}
+            <div className="flex items-center justify-between">
+                <div className="text-sm text-muted-foreground">
+                    Page {page} {events && events.length > 0 && `(${events.length} events)`}
+                </div>
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                        disabled={!hasPrevPage}
+                    >
+                        <ChevronLeft className="w-4 h-4 mr-1" />
+                        Previous
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage(p => p + 1)}
+                        disabled={!hasNextPage}
+                    >
+                        Next
+                        <ChevronRight className="w-4 h-4 ml-1" />
+                    </Button>
+                </div>
             </div>
 
             {previewEvent && (

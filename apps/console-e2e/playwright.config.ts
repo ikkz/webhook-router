@@ -31,7 +31,7 @@ export default defineConfig({
   /* Increase timeout for webhook integration tests */
   timeout: 60000,
   expect: {
-    timeout: 10000,
+    timeout: 4000,
   },
   /* Run your local dev server before starting the tests */
   webServer: {
