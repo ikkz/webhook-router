@@ -1,30 +1,71 @@
-# Webhook Router (WIP)
+# Webhook Router
 
-Webhook Router helps you unify webhook messages from different platforms, convert them into a standard Markdown format, and forward them to one or more targets. It aims to make “many webhook formats in, one normalized message out” simple and repeatable.
+Webhook Router normalizes incoming webhook payloads into Markdown and forwards them to one or more downstream targets. It includes a lightweight console UI and a basic API for managing endpoints and targets.
 
-This project is currently **work in progress**. Core routing is being built; the console and full platform coverage are still evolving.
+## What it does
+- Accepts incoming webhooks and normalizes content to Markdown.
+- Forwards events to multiple targets and records delivery results.
+- Provides a console UI under `/console` and a Basic Auth protected API under `/console/api`.
 
-## What This Project Does
-- Accepts incoming webhooks from popular platforms.
-- Normalizes content to Markdown with minimal metadata.
-- Forwards to one or more downstream webhook targets.
+## Repo layout
+- `apps/webhook_router`: Rust backend (Axum + SQLite)
+- `apps/console`: React console UI
+- `docs/`: design notes and adapter formats
 
-## Markdown Compatibility
-The system ensures your messages look great on any platform by automatically converting standard Markdown:
-- **Slack**: Converts standard Markdown (e.g., `**bold**`, `[link](url)`) to Slack's native `mrkdwn` syntax.
-- **Lark / Feishu**: Transforms Markdown into Lark's JSON "Post" (Rich Text) format to support native styling.
-- **WeCom / DingTalk**: Optimizes formatting for their respective Markdown subsets.
+## HTTP endpoints
+- Ingress: `POST /ingress/:endpoint_id/:platform`
+- Console UI: `GET /console`
+- Console API (Basic Auth): `GET /console/api/...`
 
-## Status
-- Backend routing: in active development.
-- Console UI: in progress.
-- Specs and formats: tracked under `docs/`.
+## Configuration
+All CLI flags are also available via environment variables (useful for Docker).
 
-## Repo Layout
-- `apps/webhook_router`: backend service
-- `apps/console`: management console
-- `docs/`: specs and adapter formats
+- `--bind` / `WEBHOOK_ROUTER_BIND` (default: `0.0.0.0:3000`)
+- `--db-path` / `WEBHOOK_ROUTER_DB_PATH` (default: `webhook_router.db`)
+- `--username` / `WEBHOOK_ROUTER_USERNAME` (required)
+- `--password` / `WEBHOOK_ROUTER_PASSWORD` (required)
+- `--swagger-ui` / `WEBHOOK_ROUTER_SWAGGER_UI`
+- `--generate-openapi` / `WEBHOOK_ROUTER_GENERATE_OPENAPI`
+
+## Local development
+Install dependencies:
+
+```bash
+pnpm install
+```
+
+Run the backend (builds the console as a dependency):
+
+```bash
+pnpm exec nx run webhook_router:run:debug
+```
+
+Run tests:
+
+```bash
+pnpm exec nx run webhook_router:test
+```
+
+Generate OpenAPI + API client:
+
+```bash
+pnpm exec nx run @webhook-router/api-client:generate
+```
+
+## Docker
+The container expects configuration through environment variables.
+
+Example:
+
+```bash
+docker run --rm -p 3000:3000 \
+  -e WEBHOOK_ROUTER_USERNAME=admin \
+  -e WEBHOOK_ROUTER_PASSWORD=admin \
+  -e WEBHOOK_ROUTER_DB_PATH=/data/webhook_router.db \
+  -e WEBHOOK_ROUTER_BIND=0.0.0.0:3000 \
+  webhook-router:latest
+```
 
 ## Docs
 - `docs/tech-plan.md`: architecture notes
-- `docs/adapters/`: platform webhook formats
+- `docs/adapters/`: adapter formats

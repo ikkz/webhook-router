@@ -19,17 +19,17 @@ use models::BasicAuth;
 #[derive(Debug, Parser)]
 #[command(name = "webhook-router", version)]
 struct Args {
-    #[arg(long, default_value = "0.0.0.0:3000")]
+    #[arg(long, env = "WEBHOOK_ROUTER_BIND", default_value = "0.0.0.0:3000")]
     bind: String,
-    #[arg(long, default_value = "webhook_router.db")]
+    #[arg(long, env = "WEBHOOK_ROUTER_DB_PATH", default_value = "webhook_router.db")]
     db_path: String,
-    #[arg(long)]
+    #[arg(long, env = "WEBHOOK_ROUTER_USERNAME")]
     username: String,
-    #[arg(long)]
+    #[arg(long, env = "WEBHOOK_ROUTER_PASSWORD")]
     password: String,
-    #[arg(long)]
+    #[arg(long, env = "WEBHOOK_ROUTER_GENERATE_OPENAPI")]
     generate_openapi: bool,
-    #[arg(long)]
+    #[arg(long, env = "WEBHOOK_ROUTER_SWAGGER_UI")]
     swagger_ui: bool,
 }
 
