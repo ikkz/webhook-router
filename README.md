@@ -20,7 +20,16 @@ Webhook Router solves this problem by acting as a universal adapter that:
 - Provides a console UI under `/console` and a Basic Auth protected API under `/console/api`
 - Supports custom banner/footer for message customization
 
-## Docker
+## Platform compatibility
+| Platform | Ingress message types | Markdown normalization |
+| --- | --- | --- |
+| DingTalk | text, link, markdown, actionCard (single + buttons), feedCard | Best-effort Markdown from message fields |
+| Slack | text, blocks (section/header/divider/image/context/actions/rich_text), attachments, sections | Best-effort Markdown; mrkdwn preserved where possible |
+| Lark | text | Uses message content text |
+| WeCom | text, markdown, markdown_v2 | Uses content text |
+| Custom HTTP | markdown, text (fallback to raw JSON) | Uses provided markdown/text or raw JSON |
+
+## Install with Docker
 The container expects configuration through environment variables.
 
 Example:
@@ -44,7 +53,7 @@ All CLI flags are also available via environment variables (useful for Docker).
 - `--password` / `WEBHOOK_ROUTER_PASSWORD` (required)
 - `--swagger-ui` / `WEBHOOK_ROUTER_SWAGGER_UI`
 - `--generate-openapi` / `WEBHOOK_ROUTER_GENERATE_OPENAPI`
-- `--public-ingress-base-url` / `WEBHOOK_ROUTER_PUBLIC_INGRESS_BASE_URL` (optional, e.g. `https://data.example.com/webhooks`)
+- `--public-ingress-base-url` / `WEBHOOK_ROUTER_PUBLIC_INGRESS_BASE_URL` (optional, e.g. `https://example.com/webhooks`)
 
 ### Reverse proxy
 As long as you set a strong password, exposing the bind port directly to the public internet is safe enough. If you only want to expose specific webhook endpoints publicly, you can use a reverse proxy for path routing. Example Caddy config:
@@ -66,10 +75,21 @@ With this setup, the console shows an ingress URL like:
 `http://localhost:3000/ingress/5bc06725-97e9-4cc7-92f9-9258972687cb/lark`
 
 When configuring external platforms, use:
-`https://data.example.com/webhooks/5bc06725-97e9-4cc7-92f9-9258972687cb/lark`
+`https://example.com/webhooks/5bc06725-97e9-4cc7-92f9-9258972687cb/lark`
 
 To have the console display the reverse proxy URL, set:
-`WEBHOOK_ROUTER_PUBLIC_INGRESS_BASE_URL=https://data.example.com/webhooks`
+`WEBHOOK_ROUTER_PUBLIC_INGRESS_BASE_URL=https://example.com/webhooks`
+
+## Custom HTTP Ingress Format
+For the `custom` platform ingress (`POST /ingress/:endpoint_id/custom`), the router accepts a JSON payload with the following fields:
+
+- `markdown` (string, optional): The main message content in Markdown format.
+- `text` (string, optional): Fallback content if `markdown` is not provided.
+- `title` (string, optional): An optional title for the message.
+- `id` (string, optional): A unique identifier for the event. If not provided, a UUID will be generated.
+- `timestamp` (number/string, optional): Event timestamp (Unix seconds). Defaults to current time.
+
+If neither `markdown` nor `text` is provided, the entire raw JSON payload will be used as the message content.
 
 ## Repo layout
 - `apps/webhook_router`: Rust backend (Axum + SQLite)
@@ -81,15 +101,6 @@ To have the console display the reverse proxy URL, set:
 - Console UI: `GET /console`
 - Console API (Basic Auth): `GET /console/api/...`
 
-## Platform compatibility
-| Platform | Ingress message types | Markdown normalization |
-| --- | --- | --- |
-| DingTalk | text, link, markdown, actionCard (single + buttons), feedCard | Best-effort Markdown from message fields |
-| Slack | text, blocks (section/header/divider/image/context/actions/rich_text), attachments, sections | Best-effort Markdown; mrkdwn preserved where possible |
-| Lark | text | Uses message content text |
-| WeCom | text, markdown, markdown_v2 | Uses content text |
-| Custom HTTP | markdown, text (fallback to raw JSON) | Uses provided markdown/text or raw JSON |
-
 ## Local development
 Install dependencies:
 
@@ -100,25 +111,25 @@ pnpm install
 Run the backend (builds the console as a dependency):
 
 ```bash
-nx run webhook_router:run:debug
+pnpm exec nx run webhook_router:run:debug
 ```
 
 Run tests:
 
 ```bash
-nx test webhook_router
+pnpm exec nx test webhook_router
 ```
 
 Run e2e tests:
 
 ```bash
-nx e2e console-e2e --outputStyle=static
+pnpm exec nx e2e console-e2e --outputStyle=static
 ```
 
 Generate OpenAPI + API client:
 
 ```bash
-nx run api-client:generate
+pnpm exec nx run api-client:generate
 ```
 
 ## Docs

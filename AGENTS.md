@@ -19,8 +19,8 @@ This repo uses Codex-style coding agents. Keep instructions short, concrete, and
 ## Testing
 
 - Prefer unit tests near the code (module `#[cfg(test)]`).
-- Run backend tests: `nx test webhook_router`.
-- Run e2e tests: `nx e2e console-e2e --outputStyle=static`.
+- Run backend tests: `pnpm exec nx test webhook_router`.
+- Run e2e tests: `pnpm exec nx e2e console-e2e`.
 
 ## Docs
 
@@ -29,7 +29,13 @@ This repo uses Codex-style coding agents. Keep instructions short, concrete, and
 
 ## Client Generation
 
-- To generate the API client: `nx run api-client:generate`
+- To generate the API client: `pnpm exec nx run api-client:generate`
+
+
+## Nx Commands
+
+- All `nx` commands MUST be prefixed with `pnpm exec`.
+- **IMPORTANT**: Always add `--outputStyle=static` to any `nx` command to ensure logs are visible in the terminal.
 
 <!-- nx configuration start-->
 <!-- Leave the start & end comments to automatically receive updates. -->
