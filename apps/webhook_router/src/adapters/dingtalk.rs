@@ -229,7 +229,7 @@ fn dingtalk_title_from_payload(payload: &Value, msgtype: Option<&str>) -> Option
                     .and_then(|value| value.as_str())
             })
             .map(String::from),
-        _ => msgtype.map(String::from),
+        _ => None,
     }
 }
 

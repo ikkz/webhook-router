@@ -107,7 +107,7 @@ impl WebhookAdapter for SlackAdapter {
             id: event_id,
             source: "slack".to_string(),
             timestamp,
-            title: event.get("type").and_then(|value| value.as_str()).map(String::from),
+            title: None,
             markdown: if text.is_empty() {
                 payload.to_string()
             } else {

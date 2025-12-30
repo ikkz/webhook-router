@@ -44,7 +44,7 @@ impl WebhookAdapter for WecomAdapter {
             id: event_id,
             source: "wecom".to_string(),
             timestamp,
-            title: msgtype.map(String::from),
+            title: None,
             markdown: if text.is_empty() {
                 payload.to_string()
             } else {

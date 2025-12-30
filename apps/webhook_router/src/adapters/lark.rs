@@ -151,10 +151,7 @@ impl WebhookAdapter for LarkAdapter {
             id: event_id,
             source: "lark".to_string(),
             timestamp,
-            title: message
-                .get("message_type")
-                .and_then(|value| value.as_str())
-                .map(String::from),
+            title: None,
             markdown: if content_text.is_empty() {
                 payload.to_string()
             } else {
