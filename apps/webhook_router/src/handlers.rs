@@ -50,7 +50,7 @@ pub fn api_router() -> Router<AppState> {
         .route("/endpoints/:id/targets", post(create_target).get(list_targets))
         .route("/endpoints/:id/targets/:target_id", delete(delete_target))
         .route("/endpoints", post(create_endpoint).get(list_endpoints))
-        .route("/endpoints/:id", put(update_endpoint).get(get_endpoint))
+        .route("/endpoints/:id", put(update_endpoint).get(get_endpoint).delete(delete_endpoint))
         .route("/endpoints/:id/test", post(test_send))
         .route("/events", get(list_events))
 }
@@ -68,6 +68,7 @@ pub fn api_router() -> Router<AppState> {
         get_endpoint,
         list_endpoints,
         update_endpoint,
+        delete_endpoint,
         test_send,
         list_events,
     ),
@@ -196,18 +197,16 @@ pub async fn ingress(
         tasks.spawn(async move { dispatch_to_target(&state, &event, &target).await });
     }
 
-    let mut outcomes = Vec::new();
-    while let Some(result) = tasks.join_next().await {
-        match result {
-            Ok(outcome) => outcomes.push(outcome),
-            Err(err) => error!("dispatch task failed: {}", err),
+    // Spawn a background task to collect results so we don't block the response
+    tokio::spawn(async move {
+        while let Some(result) = tasks.join_next().await {
+            if let Err(err) = result {
+                error!("dispatch task failed: {}", err);
+            }
         }
-    }
+    });
 
-    Ok(Json(json!({
-        "event_id": event.id,
-        "deliveries": outcomes,
-    })))
+    Ok(Json(json!({})))
 }
 
 async fn dispatch_to_target(
@@ -444,6 +443,37 @@ async fn update_endpoint(
         .map_err(AppError::from)?;
     let endpoint = endpoint.ok_or_else(|| AppError::not_found("endpoint not found"))?;
     Ok(Json(endpoint))
+}
+
+#[utoipa::path(
+    delete,
+    path = "/api/endpoints/{id}",
+    params(
+        ("id" = String, Path, description = "Endpoint ID")
+    ),
+    responses(
+        (status = 204, description = "Endpoint deleted successfully"),
+        (status = 404, description = "Endpoint not found", body = AppErrorResponse)
+    ),
+    security(
+        ("basic_auth" = [])
+    )
+)]
+async fn delete_endpoint(
+    Path(id): Path<String>,
+    State(state): State<AppState>,
+) -> Result<StatusCode, AppError> {
+    let affected = state
+        .db
+        .delete_endpoint(&id)
+        .await
+        .map_err(AppError::from)?;
+    
+    if affected == 0 {
+        return Err(AppError::not_found("endpoint not found"));
+    }
+    
+    Ok(StatusCode::NO_CONTENT)
 }
 
 #[utoipa::path(

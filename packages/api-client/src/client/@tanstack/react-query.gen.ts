@@ -3,8 +3,8 @@
 import { type DefaultError, type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen.js';
-import { checkAuth, createEndpoint, createTarget, deleteTarget, getEndpoint, healthz, ingress, listEndpoints, listEvents, listTargets, type Options, testSend, updateEndpoint } from '../sdk.gen.js';
-import type { CheckAuthData, CreateEndpointData, CreateEndpointError, CreateEndpointResponse, CreateTargetData, CreateTargetError, CreateTargetResponse, DeleteTargetData, DeleteTargetError, DeleteTargetResponse, GetEndpointData, GetEndpointError, GetEndpointResponse, HealthzData, HealthzResponse, IngressData, IngressError, ListEndpointsData, ListEndpointsResponse, ListEventsData, ListEventsResponse, ListTargetsData, ListTargetsResponse, TestSendData, TestSendError, UpdateEndpointData, UpdateEndpointError, UpdateEndpointResponse } from '../types.gen.js';
+import { checkAuth, createEndpoint, createTarget, deleteEndpoint, deleteTarget, getEndpoint, healthz, ingress, listEndpoints, listEvents, listTargets, type Options, testSend, updateEndpoint } from '../sdk.gen.js';
+import type { CheckAuthData, CreateEndpointData, CreateEndpointError, CreateEndpointResponse, CreateTargetData, CreateTargetError, CreateTargetResponse, DeleteEndpointData, DeleteEndpointError, DeleteEndpointResponse, DeleteTargetData, DeleteTargetError, DeleteTargetResponse, GetEndpointData, GetEndpointError, GetEndpointResponse, HealthzData, HealthzResponse, IngressData, IngressError, ListEndpointsData, ListEndpointsResponse, ListEventsData, ListEventsResponse, ListTargetsData, ListTargetsResponse, TestSendData, TestSendError, UpdateEndpointData, UpdateEndpointError, UpdateEndpointResponse } from '../types.gen.js';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -73,6 +73,20 @@ export const createEndpointMutation = (options?: Partial<Options<CreateEndpointD
     const mutationOptions: UseMutationOptions<CreateEndpointResponse, CreateEndpointError, Options<CreateEndpointData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await createEndpoint({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const deleteEndpointMutation = (options?: Partial<Options<DeleteEndpointData>>): UseMutationOptions<DeleteEndpointResponse, DeleteEndpointError, Options<DeleteEndpointData>> => {
+    const mutationOptions: UseMutationOptions<DeleteEndpointResponse, DeleteEndpointError, Options<DeleteEndpointData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await deleteEndpoint({
                 ...options,
                 ...fnOptions,
                 throwOnError: true

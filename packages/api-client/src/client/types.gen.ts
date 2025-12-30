@@ -149,6 +149,36 @@ export type CreateEndpointResponses = {
 
 export type CreateEndpointResponse = CreateEndpointResponses[keyof CreateEndpointResponses];
 
+export type DeleteEndpointData = {
+    body?: never;
+    path: {
+        /**
+         * Endpoint ID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/api/endpoints/{id}';
+};
+
+export type DeleteEndpointErrors = {
+    /**
+     * Endpoint not found
+     */
+    404: AppErrorResponse;
+};
+
+export type DeleteEndpointError = DeleteEndpointErrors[keyof DeleteEndpointErrors];
+
+export type DeleteEndpointResponses = {
+    /**
+     * Endpoint deleted successfully
+     */
+    204: void;
+};
+
+export type DeleteEndpointResponse = DeleteEndpointResponses[keyof DeleteEndpointResponses];
+
 export type GetEndpointData = {
     body?: never;
     path: {

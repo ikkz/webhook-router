@@ -233,6 +233,14 @@ impl Db {
         Ok(Some(endpoint))
     }
 
+    pub async fn delete_endpoint(&self, id: &str) -> Result<u64, sqlx::Error> {
+        let result = sqlx::query("DELETE FROM endpoints WHERE id = ?")
+            .bind(id)
+            .execute(&self.pool)
+            .await?;
+        Ok(result.rows_affected())
+    }
+
     pub async fn insert_event(
         &self,
         endpoint_id: &str,
@@ -466,5 +474,10 @@ mod tests {
         let targets = db.list_targets(&endpoint.id).await.expect("list targets");
         assert_eq!(targets.len(), 1);
         assert_eq!(targets[0].endpoint_id, endpoint.id);
+
+        // Test delete_endpoint
+        db.delete_endpoint(&endpoint.id).await.expect("delete endpoint");
+        let endpoints_after = db.list_endpoints().await.expect("list endpoints");
+        assert_eq!(endpoints_after.len(), 0);
     }
 }
