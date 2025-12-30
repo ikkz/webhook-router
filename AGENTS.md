@@ -2,6 +2,11 @@
 
 This repo uses Codex-style coding agents. Keep instructions short, concrete, and scoped to this project.
 
+## Nx Commands
+
+- All `nx` commands MUST be prefixed with `pnpm exec`.
+- **IMPORTANT**: Always add `--outputStyle=static` to any `nx` command to ensure logs are visible in the terminal.
+
 ## Project Layout
 
 - `apps/webhook_router`: Rust backend (Axum + SQLite)
@@ -32,10 +37,7 @@ This repo uses Codex-style coding agents. Keep instructions short, concrete, and
 - To generate the API client: `pnpm exec nx run api-client:generate`
 
 
-## Nx Commands
 
-- All `nx` commands MUST be prefixed with `pnpm exec`.
-- **IMPORTANT**: Always add `--outputStyle=static` to any `nx` command to ensure logs are visible in the terminal.
 
 <!-- nx configuration start-->
 <!-- Leave the start & end comments to automatically receive updates. -->
