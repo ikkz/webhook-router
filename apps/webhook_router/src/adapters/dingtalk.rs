@@ -3,6 +3,7 @@ use uuid::Uuid;
 
 use crate::adapters::{AdapterError, WebhookAdapter};
 use crate::models::{OutgoingPayload, UemEvent};
+use crate::utils::markdown::extract_title_from_markdown;
 
 #[derive(Debug)]
 pub struct DingTalkAdapter;
@@ -48,7 +49,9 @@ impl WebhookAdapter for DingTalkAdapter {
             body: json!({
                 "msgtype": "markdown",
                 "markdown": {
-                    "title": event.title.clone().unwrap_or_else(|| "Webhook Router".to_string()),
+                    "title": event.title.clone().or_else(|| {
+                         extract_title_from_markdown(&event.markdown)
+                    }).unwrap_or_else(|| "Webhook Router".to_string()),
                     "text": event.markdown
                 }
             }),

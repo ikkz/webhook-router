@@ -1,3 +1,5 @@
+https://open.feishu.cn/document/client-docs/bot-v3/add-custom-bot#f62e72d5
+
 支持发送的消息类型说明
 向自定义机器人 webhook 地址发送 POST 请求时，支持推送的消息格式有 文本、富文本、图片消息 以及 群名片 等，本章节介绍各消息类型的请求格式与展示效果。
 

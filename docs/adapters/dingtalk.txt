@@ -1,3 +1,5 @@
+https://open.dingtalk.com/document/development/the-types-of-messages-supported-by-internal-robotsin-enterprises
+
 企业内部机器人支持的消息类型
 机器人群聊会话支持发送以下消息类型：
 

@@ -1,9 +1,83 @@
+use pulldown_cmark::{Event, Options, Parser, Tag, TagEnd};
 use serde_json::{json, Value};
 use uuid::Uuid;
 
 use crate::adapters::{AdapterError, WebhookAdapter};
 use crate::models::{OutgoingPayload, UemEvent};
-use crate::utils::markdown::SlackConverter;
+
+/// Converts Standard Markdown to Slack's 'mrkdwn' format.
+fn markdown_to_slack(markdown: &str) -> String {
+    let mut options = Options::empty();
+    options.insert(Options::ENABLE_STRIKETHROUGH);
+    options.insert(Options::ENABLE_TABLES); 
+    
+    let parser = Parser::new_ext(markdown, options);
+    let mut slack_text = String::new();
+
+    for event in parser {
+        match event {
+            Event::Start(tag) => match tag {
+                Tag::Paragraph => {},
+                Tag::Heading { .. } => slack_text.push('*'),
+                Tag::BlockQuote(_) => slack_text.push_str("> "),
+                Tag::CodeBlock(_) => {
+                    slack_text.push_str("```\n");
+                }
+                Tag::List(Some(_)) => {}, // Ordered list
+                Tag::List(None) => {},    // Unordered list
+                Tag::Item => slack_text.push_str("• "),
+                Tag::Emphasis => slack_text.push('_'),
+                Tag::Strong => slack_text.push('*'),
+                Tag::Strikethrough => slack_text.push('~'),
+                Tag::Link { link_type: _, dest_url, title: _, id: _ } => {
+                   slack_text.push('<');
+                   slack_text.push_str(&dest_url);
+                   slack_text.push('|');
+                },
+                Tag::Image { link_type: _, dest_url, title: _, id: _ } => {
+                     slack_text.push('<');
+                     slack_text.push_str(&dest_url);
+                     slack_text.push('|');
+                }
+                 _ => {}
+            },
+            Event::End(tag) => match tag {
+                TagEnd::Paragraph => slack_text.push('\n'),
+                TagEnd::Heading(_) => slack_text.push_str("*\n"),
+                TagEnd::BlockQuote(_) => slack_text.push('\n'),
+                TagEnd::CodeBlock => {
+                    slack_text.push_str("\n```\n");
+                }
+                TagEnd::List(_) => {},
+                TagEnd::Item => slack_text.push('\n'),
+                TagEnd::Emphasis => slack_text.push('_'),
+                TagEnd::Strong => slack_text.push('*'),
+                TagEnd::Strikethrough => slack_text.push('~'),
+                TagEnd::Link => {
+                     slack_text.push('>');
+                },
+                TagEnd::Image => {
+                    slack_text.push_str("image>");
+                },
+                 _ => {}
+            },
+            Event::Text(text) => {
+                slack_text.push_str(&text);
+            },
+            Event::Code(text) => {
+               slack_text.push('`');
+               slack_text.push_str(&text);
+               slack_text.push('`');
+            }
+            Event::SoftBreak => slack_text.push('\n'),
+            Event::HardBreak => slack_text.push('\n'),
+            Event::Rule => slack_text.push_str("---\n"),
+            _ => {}
+        }
+    }
+    
+    slack_text.trim().to_string()
+}
 
 #[derive(Debug)]
 pub struct SlackAdapter;
@@ -45,7 +119,7 @@ impl WebhookAdapter for SlackAdapter {
     }
 
     fn uem_to_egress(&self, event: &UemEvent) -> Result<OutgoingPayload, AdapterError> {
-        let mrkdwn = SlackConverter::convert(&event.markdown);
+        let mrkdwn = markdown_to_slack(&event.markdown);
         Ok(OutgoingPayload {
             body: json!({ "text": mrkdwn }),
             content_type: "application/json",
@@ -427,5 +501,19 @@ mod tests {
                 "raw": event.raw,
             })
         );
+    }
+
+    #[test]
+    fn test_slack_conversion() {
+        let md = "**Bold** and *Italic* and [Link](http://example.com)";
+        let slack = markdown_to_slack(md);
+        assert_eq!(slack, "*Bold* and _Italic_ and <http://example.com|Link>");
+    }
+
+     #[test]
+    fn test_slack_headers() {
+        let md = "# Heading 1";
+        let slack = markdown_to_slack(md);
+        assert_eq!(slack, "*Heading 1*"); // Headers become bold
     }
 }

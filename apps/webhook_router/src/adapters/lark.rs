@@ -1,9 +1,117 @@
+use pulldown_cmark::{Event, Options, Parser, Tag, TagEnd};
 use serde_json::{json, Value};
 use uuid::Uuid;
 
 use crate::adapters::{AdapterError, WebhookAdapter};
 use crate::models::{OutgoingPayload, UemEvent};
-use crate::utils::markdown::LarkConverter;
+
+/// Converts Standard Markdown to Lark's 'post' JSON structure.
+///
+/// Lark Rich Text Structure:
+/// {
+///   "zh_cn": {
+///     "title": "Title",
+///     "content": [
+///       [ {"tag": "text", "text": "foo"} ] // Paragraph 1
+///     ]
+///   }
+/// }
+fn markdown_to_lark(title: Option<&str>, markdown: &str) -> Value {
+    let mut options = Options::empty();
+    options.insert(Options::ENABLE_STRIKETHROUGH);
+    
+    let parser = Parser::new_ext(markdown, options);
+    
+    let mut content: Vec<Vec<Value>> = Vec::new();
+    let mut current_paragraph: Vec<Value> = Vec::new();
+    
+    // State tracking
+    let mut link_url: Option<String> = None;
+
+    let flush_paragraph = |content: &mut Vec<Vec<Value>>, current: &mut Vec<Value>| {
+        if !current.is_empty() {
+            content.push(current.clone());
+            current.clear();
+        }
+    };
+
+    for event in parser {
+        match event {
+            Event::Start(tag) => match tag {
+                Tag::Paragraph => {}, // Start collecting
+                Tag::Heading { level: _, .. } => {
+                    flush_paragraph(&mut content, &mut current_paragraph);
+                },
+                Tag::BlockQuote(_) => {}, 
+                Tag::CodeBlock(_) => {
+                     flush_paragraph(&mut content, &mut current_paragraph);
+                }, 
+                Tag::List(_) => flush_paragraph(&mut content, &mut current_paragraph),
+                Tag::Item => {},
+                Tag::Emphasis => {},
+                Tag::Strong => {},
+                Tag::Strikethrough => {},
+                Tag::Link { dest_url, .. } => link_url = Some(dest_url.to_string()),
+                _ => {}
+            },
+            Event::End(tag) => match tag {
+                TagEnd::Paragraph => flush_paragraph(&mut content, &mut current_paragraph),
+                TagEnd::Heading(_) => {
+                     flush_paragraph(&mut content, &mut current_paragraph);
+                },
+                TagEnd::BlockQuote(_) => flush_paragraph(&mut content, &mut current_paragraph),
+                TagEnd::CodeBlock => flush_paragraph(&mut content, &mut current_paragraph),
+                TagEnd::List(_) => flush_paragraph(&mut content, &mut current_paragraph),
+                TagEnd::Item => flush_paragraph(&mut content, &mut current_paragraph),
+                TagEnd::Emphasis => {},
+                TagEnd::Strong => {},
+                TagEnd::Strikethrough => {},
+                TagEnd::Link => link_url = None,
+                _ => {}
+            },
+            Event::Text(text) => {
+                if let Some(url) = &link_url {
+                     current_paragraph.push(json!({
+                        "tag": "a",
+                        "text": text.as_ref(),
+                        "href": url
+                    }));
+                } else {
+                     current_paragraph.push(json!({
+                        "tag": "text",
+                        "text": text.as_ref()
+                    }));
+                }
+            },
+             Event::Code(text) => {
+                  current_paragraph.push(json!({
+                        "tag": "text",
+                        "text": text.as_ref()
+                    }));
+             },
+             Event::SoftBreak | Event::HardBreak => {},
+             _ => {}
+        }
+    }
+    flush_paragraph(&mut content, &mut current_paragraph);
+
+    // Fallback if empty
+    if content.is_empty() {
+         content.push(vec![json!({"tag": "text", "text": markdown})]);
+    }
+
+    let mut zh_cn = serde_json::Map::new();
+    if let Some(t) = title {
+        zh_cn.insert("title".to_string(), json!(t));
+    }
+    zh_cn.insert("content".to_string(), json!(content));
+
+    json!({
+        "zh_cn": zh_cn
+    })
+}
+
+
 
 #[derive(Debug)]
 pub struct LarkAdapter;
@@ -58,7 +166,7 @@ impl WebhookAdapter for LarkAdapter {
     }
 
     fn uem_to_egress(&self, event: &UemEvent) -> Result<OutgoingPayload, AdapterError> {
-        let post_content = LarkConverter::convert(&event.markdown);
+        let post_content = markdown_to_lark(event.title.as_deref(), &event.markdown);
         Ok(OutgoingPayload {
             body: json!({
                 "msg_type": "post",
@@ -135,5 +243,13 @@ mod tests {
                 "body": payload.body,
             })
         );
+    }
+
+    #[test]
+    fn test_lark_structure() {
+        let md = "Hello [World](http://example.com)";
+        let lark = markdown_to_lark(None, md);
+        let content = lark["zh_cn"]["content"].as_array().unwrap();
+        assert!(!content.is_empty());
     }
 }
