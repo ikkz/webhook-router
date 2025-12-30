@@ -141,6 +141,7 @@ function EndpointCard({ endpoint }: { endpoint: any }) {
                                     size="icon-sm"
                                     variant="ghost"
                                     className="h-8 w-8 text-muted-foreground hover:text-primary"
+                                    aria-label="Rename endpoint"
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         setIsEditing(true);
@@ -153,6 +154,7 @@ function EndpointCard({ endpoint }: { endpoint: any }) {
                                     size="icon-sm"
                                     variant="ghost"
                                     className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                    aria-label="Delete endpoint"
                                     onClick={handleDelete}
                                 >
                                     <Trash2 className="w-3.5 h-3.5" />

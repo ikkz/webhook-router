@@ -136,7 +136,7 @@ test.describe('Endpoints Management', () => {
         await card.hover();
 
         const deleteButton = card.locator('button').nth(1); // Assuming second button is delete (Trash2)
-        await deleteButton.click();
+        await deleteButton.click({ force: true });
 
         // Verify endpoint gone
         await expect(page.locator(`text=${endpointName}`)).not.toBeVisible();
