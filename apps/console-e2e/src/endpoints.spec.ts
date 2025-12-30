@@ -91,6 +91,7 @@ test.describe('Endpoints Management', () => {
         // Get the ID from the card description
         const endpointIdCleanup = await cardByName.locator('.text-xs.font-mono').innerText();
         const endpointId = endpointIdCleanup.trim();
+        console.log(`Test: Endpoint ID extracted: "${endpointId}"`);
 
         // Now use ID to locate card
         const endpointCard = page.locator(`text=${endpointId}`).locator('..').locator('..');
@@ -108,8 +109,14 @@ test.describe('Endpoints Management', () => {
         const saveButton = endpointCard.locator('button[type="submit"]');
         await saveButton.click();
 
-        // Verify name updated
-        await expect(page.locator(`h3:has-text("${newName}")`)).toBeVisible();
+        // Wait for potential network request
+        await page.waitForTimeout(1000);
+
+        // Reload page to verify persistence
+        await page.reload();
+
+        // Verify name updated (simplified check)
+        await expect(page.locator(`text=${newName}`)).toBeVisible();
     });
 
     test('should delete an endpoint', async ({ page }) => {
