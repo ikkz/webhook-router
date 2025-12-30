@@ -45,14 +45,22 @@ impl WebhookAdapter for DingTalkAdapter {
     }
 
     fn uem_to_egress(&self, event: &UemEvent) -> Result<OutgoingPayload, AdapterError> {
+        let (title, text) = if let Some(t) = &event.title {
+            (t.clone(), format!("# {}\n\n{}", t, event.markdown))
+        } else {
+            (
+                extract_title_from_markdown(&event.markdown)
+                    .unwrap_or_else(|| "Webhook Router".to_string()),
+                event.markdown.clone(),
+            )
+        };
+
         Ok(OutgoingPayload {
             body: json!({
                 "msgtype": "markdown",
                 "markdown": {
-                    "title": event.title.clone().or_else(|| {
-                         extract_title_from_markdown(&event.markdown)
-                    }).unwrap_or_else(|| "Webhook Router".to_string()),
-                    "text": event.markdown
+                    "title": title,
+                    "text": text
                 }
             }),
             content_type: "application/json",
@@ -398,6 +406,28 @@ mod tests {
         let payload = adapter.uem_to_egress(&event).expect("payload");
         assert_yaml_snapshot!(
             "adapters_dingtalk_uem_to_egress",
+            json!({
+                "content_type": payload.content_type,
+                "body": payload.body,
+            })
+        );
+    }
+
+    #[test]
+    fn dingtalk_uem_to_egress_with_title() {
+        let adapter = DingTalkAdapter;
+        let event = UemEvent {
+            id: "evt-2".to_string(),
+            source: "dingtalk".to_string(),
+            timestamp: 1,
+            title: Some("My Title".to_string()),
+            markdown: "hello".to_string(),
+            raw: json!({}),
+            meta: json!({}),
+        };
+        let payload = adapter.uem_to_egress(&event).expect("payload");
+        assert_yaml_snapshot!(
+            "adapters_dingtalk_uem_to_egress_with_title",
             json!({
                 "content_type": payload.content_type,
                 "body": payload.body,

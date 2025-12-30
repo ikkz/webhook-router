@@ -61,10 +61,16 @@ impl WebhookAdapter for WecomAdapter {
     }
 
     fn uem_to_egress(&self, event: &UemEvent) -> Result<OutgoingPayload, AdapterError> {
+        let content = if let Some(title) = &event.title {
+            format!("# {}\n\n{}", title, event.markdown)
+        } else {
+            event.markdown.clone()
+        };
+
         Ok(OutgoingPayload {
             body: json!({
                 "msgtype": "markdown",
-                "markdown": { "content": event.markdown }
+                "markdown": { "content": content }
             }),
             content_type: "application/json",
         })
@@ -132,6 +138,52 @@ mod tests {
             json!({
                 "content_type": payload.content_type,
                 "body": payload.body,
+            })
+        );
+    }
+
+    #[test]
+    fn wecom_uem_to_egress_with_title() {
+        let adapter = WecomAdapter;
+        let event = UemEvent {
+            id: "evt-2".to_string(),
+            source: "wecom".to_string(),
+            timestamp: 1,
+            title: Some("My Title".to_string()),
+            markdown: "hello".to_string(),
+            raw: json!({}),
+            meta: json!({}),
+        };
+        let payload = adapter.uem_to_egress(&event).expect("payload");
+        assert_yaml_snapshot!(
+            "adapters_wecom_uem_to_egress_with_title",
+            json!({
+                "content_type": payload.content_type,
+                "body": payload.body,
+            })
+        );
+    }
+
+    #[test]
+    fn wecom_ingress_text() {
+        let adapter = WecomAdapter;
+        let payload = json!({
+            "msgid": "wx-text-1",
+            "create_time": 1700000000,
+            "msgtype": "text",
+            "text": { "content": "hello world" }
+        });
+        let event = adapter.ingress_to_uem(&payload).expect("uem");
+        assert_yaml_snapshot!(
+            "adapters_wecom_ingress_text",
+            json!({
+                "id": event.id,
+                "source": event.source,
+                "timestamp": event.timestamp,
+                "title": event.title,
+                "markdown": event.markdown,
+                "meta": event.meta,
+                "raw": event.raw,
             })
         );
     }

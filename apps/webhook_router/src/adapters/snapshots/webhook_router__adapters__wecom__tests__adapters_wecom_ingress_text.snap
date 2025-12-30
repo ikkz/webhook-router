@@ -1,0 +1,18 @@
+---
+source: apps/webhook_router/src/adapters/wecom.rs
+expression: "json!({\n    \"id\": event.id, \"source\": event.source, \"timestamp\": event.timestamp,\n    \"title\": event.title, \"markdown\": event.markdown, \"meta\": event.meta,\n    \"raw\": event.raw,\n})"
+---
+id: wx-text-1
+markdown: hello world
+meta:
+  mentioned_list: ~
+  msgtype: text
+raw:
+  create_time: 1700000000
+  msgid: wx-text-1
+  msgtype: text
+  text:
+    content: hello world
+source: wecom
+timestamp: 1700000000
+title: text

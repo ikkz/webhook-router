@@ -119,7 +119,12 @@ impl WebhookAdapter for SlackAdapter {
     }
 
     fn uem_to_egress(&self, event: &UemEvent) -> Result<OutgoingPayload, AdapterError> {
-        let mrkdwn = markdown_to_slack(&event.markdown);
+        let markdown = if let Some(title) = &event.title {
+            format!("# {}\n\n{}", title, event.markdown)
+        } else {
+            event.markdown.clone()
+        };
+        let mrkdwn = markdown_to_slack(&markdown);
         Ok(OutgoingPayload {
             body: json!({ "text": mrkdwn }),
             content_type: "application/json",
@@ -451,6 +456,28 @@ mod tests {
         let payload = adapter.uem_to_egress(&event).expect("payload");
         assert_yaml_snapshot!(
             "adapters_slack_uem_to_egress",
+            json!({
+                "content_type": payload.content_type,
+                "body": payload.body,
+            })
+        );
+    }
+
+    #[test]
+    fn slack_uem_to_egress_with_title() {
+        let adapter = SlackAdapter;
+        let event = UemEvent {
+            id: "evt-2".to_string(),
+            source: "slack".to_string(),
+            timestamp: 1,
+            title: Some("My Header".to_string()),
+            markdown: "hello".to_string(),
+            raw: json!({}),
+            meta: json!({}),
+        };
+        let payload = adapter.uem_to_egress(&event).expect("payload");
+        assert_yaml_snapshot!(
+            "adapters_slack_uem_to_egress_with_title",
             json!({
                 "content_type": payload.content_type,
                 "body": payload.body,

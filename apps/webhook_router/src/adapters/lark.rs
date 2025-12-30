@@ -246,6 +246,28 @@ mod tests {
     }
 
     #[test]
+    fn lark_uem_to_egress_with_title() {
+        let adapter = LarkAdapter;
+        let event = UemEvent {
+            id: "evt-2".to_string(),
+            source: "lark".to_string(),
+            timestamp: 1,
+            title: Some("Lark Title".to_string()),
+            markdown: "hello".to_string(),
+            raw: json!({}),
+            meta: json!({}),
+        };
+        let payload = adapter.uem_to_egress(&event).expect("payload");
+        assert_yaml_snapshot!(
+            "adapters_lark_uem_to_egress_with_title",
+            json!({
+                "content_type": payload.content_type,
+                "body": payload.body,
+            })
+        );
+    }
+
+    #[test]
     fn test_lark_structure() {
         let md = "Hello [World](http://example.com)";
         let lark = markdown_to_lark(None, md);
